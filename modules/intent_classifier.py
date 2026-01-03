@@ -54,6 +54,12 @@ class IntentClassifier:
         """Classify user input as 'command', 'question', or 'conversation'"""
         user_input_lower = user_input.lower().strip()
         
+        # Check for workflow-specific commands first
+        if ("deep research" in user_input_lower or 
+            "comprehensive research" in user_input_lower or
+            "research workflow" in user_input_lower):
+            return 'command'
+            
         # Check for conversational input first
         if any(indicator in user_input_lower for indicator in self.conversational_indicators):
             return 'conversation'

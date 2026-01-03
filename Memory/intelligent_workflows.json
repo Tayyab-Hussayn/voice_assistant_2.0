@@ -1,0 +1,162 @@
+{
+  "research_blockchain_technology": {
+    "name": "Research: Blockchain Technology",
+    "description": "Comprehensive research workflow exploring blockchain fundamentals, technical architecture, applications, trends, challenges, and future outlook",
+    "steps": [
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain technology fundamentals 2024 overview",
+        "description": "Search for blockchain basics and core concepts",
+        "adaptive_next": true
+      },
+      {
+        "type": "ai_decision",
+        "condition": "Results provide foundational blockchain concepts (decentralization, distributed ledger, consensus mechanisms)",
+        "true_action": "proceed_to_technical_deep_dive",
+        "false_action": "search_blockchain_basics_again",
+        "description": "Validate foundational knowledge obtained"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain technical architecture consensus algorithms PoW PoS validation",
+        "description": "Search for technical blockchain architecture details",
+        "adaptive_next": true
+      },
+      {
+        "type": "ai_think",
+        "action": "Analyze consensus mechanisms, block structure, mining vs staking, smart contract basics. Identify key technical differentiators.",
+        "description": "Synthesize technical blockchain architecture"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain use cases DeFi NFT supply chain healthcare real world applications 2024",
+        "description": "Search for blockchain practical applications",
+        "adaptive_next": true
+      },
+      {
+        "type": "ai_decision",
+        "condition": "Results show diverse real-world use cases across multiple industries",
+        "true_action": "proceed_to_trends",
+        "false_action": "search_additional_use_cases",
+        "description": "Evaluate application diversity coverage"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain trends 2024 enterprise adoption Layer2 scaling solutions regulation",
+        "description": "Search for current blockchain trends and developments",
+        "adaptive_next": true
+      },
+      {
+        "type": "ai_think",
+        "action": "Analyze Layer2 solutions (Arbitrum, Optimism), enterprise blockchain adoption, regulatory landscape, and emerging protocols.",
+        "description": "Analyze current blockchain trends"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain challenges scalability energy consumption security issues interoperability",
+        "description": "Search for blockchain challenges and limitations",
+        "adaptive_next": true
+      },
+      {
+        "type": "ai_think",
+        "action": "Evaluate scalability trilemma, energy concerns post-merge, security vulnerabilities, and cross-chain interoperability solutions.",
+        "description": "Analyze blockchain challenges and solutions"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_search",
+        "action": "blockchain vs traditional databases distributed ledger comparison advantages disadvantages",
+        "description": "Compare blockchain with traditional alternatives",
+        "adaptive_next": false
+      },
+      {
+        "type": "ai_think",
+        "action": "Synthesize comparative analysis: when to use blockchain vs traditional databases, cost-benefit analysis, trust models, and use case suitability.",
+        "description": "Synthesize comparative analysis"
+      },
+      {
+        "type": "ai_decision",
+        "condition": "Sufficient comprehensive data gathered on all key aspects",
+        "true_action": "proceed_to_report_generation",
+        "false_action": "search_additional_topics",
+        "description": "Evaluate research completeness"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/file_ops",
+        "action": "save_research_data",
+        "parameters": {
+          "filename": "blockchain_research_data.json",
+          "data": {
+            "fundamentals": "placeholder",
+            "technical_architecture": "placeholder",
+            "use_cases": "placeholder",
+            "trends": "placeholder",
+            "challenges": "placeholder",
+            "comparative_analysis": "placeholder"
+          }
+        },
+        "description": "Save comprehensive research data to file"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/web_dev",
+        "action": "create_research_report",
+        "parameters": {
+          "title": "Comprehensive Blockchain Technology Research Report",
+          "sections": [
+            "Executive Summary",
+            "Introduction to Blockchain Technology",
+            "Technical Architecture Deep Dive",
+            "Real-World Applications and Use Cases",
+            "Current Market Trends (2024)",
+            "Challenges, Limitations, and Solutions",
+            "Comparative Analysis with Traditional Systems",
+            "Future Outlook and Predictions",
+            "Conclusions and Recommendations"
+          ],
+          "format": "interactive HTML report with charts",
+          "style": "professional research document"
+        },
+        "description": "Generate interactive HTML research report"
+      },
+      {
+        "type": "ai_think",
+        "action": "Review generated report for gaps, verify all sections are comprehensive, assess data visualization quality, and identify areas needing additional research.",
+        "description": "Review and validate final report"
+      },
+      {
+        "type": "ai_decision",
+        "condition": "Report meets quality standards with all sections complete and accurate",
+        "true_action": "complete_research",
+        "false_action": "revise_report_sections",
+        "description": "Final quality check before completion"
+      },
+      {
+        "type": "tool_call",
+        "tool": "/file_ops",
+        "action": "save_final_report",
+        "parameters": {
+          "filename": "blockchain_technology_research_final.html",
+          "metadata": {
+            "topic": "Blockchain Technology",
+            "date": "2024",
+            "version": "1.0",
+            "sections_covered": 9
+          }
+        },
+        "description": "Save final research report"
+      }
+    ],
+    "adaptive": true,
+    "created": "2026-01-03T14:47:41.307512",
+    "last_run": null,
+    "run_count": 0,
+    "active": true
+  }
+}

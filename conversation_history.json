@@ -114,8 +114,13 @@
       "timestamp": "2026-01-03T14:10:06.350140",
       "user": "why is the sky blue",
       "jarvis": "A fantastic question! The sky appears blue due to a phenomenon called **Rayleigh scattering**.\n\nHere's what's happening:\n\n**The Science:**\n1. **Sunlight Composition** - Sunlight contains all colors of the visible spectrum (red, orange, yellow, green, blue, violet)\n\n2. **Scattering Effect** - When sunlight enters Earth's atmosphere, it collides with gas molecules (mainly nitrogen and oxygen)\n\n3. **Wavelength Matters** - Shorter wavelengths (blue and violet) scatter more easily than longer wavelengths (red and orange)\n\n**Why Blue, Not Violet?**\n- Blue light scatters roughly 10x more than red light\n- Our eyes are actually more sensitive to blue than violet\n- Some violet light is absorbed in the upper atmosphere\n\n**"
+    },
+    {
+      "timestamp": "2026-01-03T14:46:54.167030",
+      "user": "deep research on quantum computing",
+      "jarvis": "# Quantum Computing: A Comprehensive Overview\n\n---\n\n## 1. Introduction\n\n**Quantum computing** represents a paradigm shift in computational architecture, leveraging quantum mechanical phenomena to process information fundamentally differently than classical computers.\n\n| Aspect | Classical Computing | Quantum Computing |\n|--------|---------------------|-------------------|\n| Unit | Bit (0 or 1) | Qubit (superposition of 0 and 1) |"
     }
   ],
   "context": {},
-  "last_updated": "2026-01-03T14:10:06.350265"
+  "last_updated": "2026-01-03T14:46:54.167244"
 }

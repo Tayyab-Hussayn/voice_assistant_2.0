@@ -11,6 +11,10 @@ from modules.learning_system import LearningSystem
 from modules.task_scheduler import TaskScheduler
 from modules.feature_discovery import FeatureDiscovery
 from modules.intent_classifier import IntentClassifier
+from modules.workflow_engine import WorkflowEngine
+from modules.performance_monitor import PerformanceMonitor
+from modules.error_handler import ErrorHandler
+from modules.intelligent_workflow_engine import IntelligentWorkflowEngine
 import os
 import json
 import time
@@ -53,6 +57,12 @@ class JARVIS:
         
         # Initialize intent classifier for smart command/question detection
         self.intent_classifier = IntentClassifier(self.ai)
+        
+        # Phase 5: Advanced Workflow Automation & Polish
+        self.workflow_engine = WorkflowEngine(self)  # Basic workflow automation
+        self.intelligent_workflow = IntelligentWorkflowEngine(self)  # Intelligent agentic workflows
+        self.performance_monitor = PerformanceMonitor()  # Performance tracking
+        self.error_handler = ErrorHandler(self)  # Error handling and recovery
         
         # Update conversational AI with feature awareness and memory
         self.conversation_ai.feature_discovery = self.feature_discovery
@@ -295,6 +305,62 @@ class JARVIS:
             self.ai.speak("Task scheduling is available. You can schedule daily, weekly, or one-time tasks.")
             return True
         
+        elif "workflow" in user_input:
+            if "create" in user_input and "development" in user_input:
+                # Extract project name
+                words = user_input.split()
+                project_name = "MyProject"
+                for i, word in enumerate(words):
+                    if word in ["for", "called", "named"] and i + 1 < len(words):
+                        project_name = words[i + 1]
+                        break
+                
+                workflow_id = self.workflow_engine.create_development_workflow(project_name)
+                self.ai.speak(f"Created development workflow for {project_name}")
+                return True
+            
+            elif "run" in user_input or "execute" in user_input:
+                # Extract workflow name
+                if "daily startup" in user_input:
+                    # Create and run daily startup workflow
+                    workflow_id = self.workflow_engine.create_daily_startup_workflow()
+                    success, result = self.workflow_engine.execute_workflow(workflow_id)
+                    if success:
+                        print(result["message"])
+                    return True
+                else:
+                    self.ai.speak("Please specify which workflow to run")
+                    return True
+            
+            elif "list" in user_input:
+                workflows = self.workflow_engine.list_workflows()
+                if workflows:
+                    self.ai.speak(f"You have {len(workflows)} workflows available")
+                    for wf in workflows:
+                        print(f"- {wf['name']}: {wf['description']}")
+                else:
+                    self.ai.speak("No workflows created yet")
+                return True
+        
+        elif "research" in user_input and ("deep" in user_input or "comprehensive" in user_input):
+            # Extract research topic
+            topic = user_input.replace("deep research", "").replace("comprehensive research", "").replace("research", "").strip()
+            if not topic:
+                topic = input("What would you like me to research? ").strip()
+            
+            if topic:
+                self.ai.speak(f"Creating intelligent research workflow for {topic}")
+                workflow_id = self.intelligent_workflow.generate_research_workflow(topic, "comprehensive")
+                
+                if workflow_id:
+                    self.ai.speak("Research workflow created. Starting automatic execution.")
+                    success, result = self.intelligent_workflow.execute_intelligent_workflow(workflow_id)
+                    if success:
+                        print(f"\n🎯 {result['message']}")
+                else:
+                    self.ai.speak("Could not create research workflow")
+                return True
+        
         return False
     
     def handle_special_commands(self, command):
@@ -328,18 +394,77 @@ class JARVIS:
 /features    - Show all capabilities in tree format
 /status      - Show system component status  
 /capabilities - Show capability summary
+/performance - Show performance metrics
+/workflows   - List all workflows
+/workflow create [name] - Create interactive workflow
+/health      - Show system health status
 /help        - Show this help message
+
+🧠 Intelligent Workflow Features:
+• "Deep research on [topic]" - Auto-generates research workflow
+• "Comprehensive research [topic]" - Creates and runs research workflow
+• Ctrl+M during workflow - Modify workflow steps in real-time
+• Ctrl+P during workflow - Pause/resume workflow execution
 
 Voice Commands Examples:
 • "Create a website for my restaurant"
+• "Deep research on artificial intelligence"
 • "Remember that I like coffee"
 • "Switch context to work"
-• "What do you remember?"
-• "Take a screenshot"
-• "Open Chrome browser"
+• "Run workflow daily startup"
+• "/workflow create MyWorkflow"
 """
             print(help_text)
-            self.ai.speak("Help information displayed. I can help with web development, memory, system control, and much more.")
+            self.ai.speak("Help information displayed. I now have intelligent workflows with real-time modification and tool integration.")
+            return None
+        
+        elif cmd == '/performance':
+            summary = self.performance_monitor.get_performance_summary()
+            print(summary)
+            self.ai.speak("Performance metrics displayed. Check the screen for detailed statistics.")
+            return None
+        
+        elif cmd == '/workflows':
+            workflows = self.workflow_engine.list_workflows()
+            if workflows:
+                print("\n🔄 Available Workflows:")
+                print("=" * 30)
+                for wf in workflows:
+                    status = "✅ Active" if wf["active"] else "❌ Inactive"
+                    print(f"{wf['name']} ({wf['id']}) - {status}")
+                    print(f"  Steps: {wf['steps']} | Runs: {wf['run_count']}")
+                    print(f"  Description: {wf['description']}")
+                    print()
+                self.ai.speak(f"Found {len(workflows)} workflows. Check the display for details.")
+            else:
+                print("No workflows created yet.")
+                self.ai.speak("No workflows found. You can create workflows for automated task sequences.")
+            return None
+        
+        elif cmd == '/health':
+            health = self.error_handler.get_health_status()
+            error_stats = self.error_handler.get_error_statistics()
+            print(f"\n🏥 JARVIS Health Status: {health}")
+            if "error_types" in error_stats:
+                print("\nError Summary:")
+                for error_type, count in error_stats["error_types"].items():
+                    print(f"  {error_type}: {count} occurrences")
+        elif cmd.startswith('/workflow create'):
+            # Extract workflow name
+            parts = cmd.split(' ', 2)
+            if len(parts) >= 3:
+                workflow_name = parts[2]
+                workflow_id = self.intelligent_workflow.create_interactive_workflow(workflow_name)
+                if workflow_id:
+                    self.ai.speak(f"Interactive workflow {workflow_name} created successfully")
+                else:
+                    self.ai.speak("Workflow creation cancelled")
+            else:
+                workflow_name = input("Enter workflow name: ").strip()
+                if workflow_name:
+                    workflow_id = self.intelligent_workflow.create_interactive_workflow(workflow_name)
+                    if workflow_id:
+                        self.ai.speak(f"Interactive workflow {workflow_name} created successfully")
             return None
         
         else:
@@ -351,94 +476,121 @@ Voice Commands Examples:
         """Main input processing pipeline with intelligent intent classification"""
         print(f"\n🔍 JARVIS Processing: '{user_input}'")
         
-        # Handle special commands first
-        if user_input.startswith('/'):
-            return self.handle_special_commands(user_input)
+        # Start performance monitoring
+        operation_data = self.performance_monitor.start_operation("process_input")
         
-        # TIER 0: Classify user intent
-        intent = self.intent_classifier.classify_intent(user_input)
-        print(f"🎯 Intent detected: {intent}")
-        
-        # Handle based on intent
-        if intent == 'conversation':
-            # Pure conversational input
-            success, response = self.conversation_ai.handle_conversation(user_input)
-            if success:
-                self.ai.speak(response)
-                print(f"💬 {response}")
-                return None
-        
-        elif intent == 'question':
-            # User is asking a question - prioritize conversational response
-            success, response = self.conversation_ai.handle_conversation(user_input)
-            if success:
-                self.ai.speak(response)
-                print(f"❓ {response}")
-                return None
-            else:
-                # Fallback to AI for complex questions
-                print("🤖 JARVIS thinking about your question...")
-                self.ai.speak("Let me think about that question")
-                advanced_response = self.ai.process_advanced_request(user_input, self.current_dir)
-                if advanced_response:
-                    self.ai.speak("Here's what I found")
-                    print(f"🎯 {advanced_response}")
-                    return None
-        
-        elif intent == 'command':
-            # User wants to execute a command - prioritize action
-            print("⚙️ Processing as command...")
+        try:
+            # Handle special commands first
+            if user_input.startswith('/'):
+                result = self.handle_special_commands(user_input)
+                self.performance_monitor.end_operation(operation_data, success=True)
+                return result
             
-            # TIER 1: Enhanced command processing (modular system)
-            result = self.command_processor.process_command(user_input)
-            if result is not None:
-                success, message = result
+            # TIER 0: Classify user intent
+            intent = self.intent_classifier.classify_intent(user_input)
+            print(f"🎯 Intent detected: {intent}")
+            
+            # Handle based on intent
+            if intent == 'conversation':
+                # Pure conversational input
+                success, response = self.conversation_ai.handle_conversation(user_input)
                 if success:
-                    self.ai.speak(message)
-                    print(f"✅ {message}")
+                    self.ai.speak(response)
+                    print(f"💬 {response}")
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+            
+            elif intent == 'question':
+                # User is asking a question - prioritize conversational response
+                success, response = self.conversation_ai.handle_conversation(user_input)
+                if success:
+                    self.ai.speak(response)
+                    print(f"❓ {response}")
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
                 else:
-                    self.ai.speak(f"Error: {message}")
-                    print(f"❌ {message}")
-                return None
+                    # Fallback to AI for complex questions
+                    print("🤖 JARVIS thinking about your question...")
+                    self.ai.speak("Let me think about that question")
+                    advanced_response = self.ai.process_advanced_request(user_input, self.current_dir)
+                    if advanced_response:
+                        self.ai.speak("Here's what I found")
+                        print(f"🎯 {advanced_response}")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return None
             
-            # Handle special JARVIS requests
-            if self.handle_memory_commands(user_input):
-                return None
-            
-            if self.handle_web_project_request(user_input):
-                return None
-            
-            if self.handle_vision_commands(user_input):
-                return None
-            
-            if self.handle_application_launch(user_input):
-                return None
+            elif intent == 'command':
+                # User wants to execute a command - prioritize action
+                print("⚙️ Processing as command...")
                 
-            if self.handle_system_info_request(user_input):
-                return None
+                # TIER 1: Enhanced command processing (modular system)
+                result = self.command_processor.process_command(user_input)
+                if result is not None:
+                    success, message = result
+                    if success:
+                        self.ai.speak(message)
+                        print(f"✅ {message}")
+                    else:
+                        self.ai.speak(f"Error: {message}")
+                        print(f"❌ {message}")
+                    self.performance_monitor.end_operation(operation_data, success=success)
+                    return None
+                
+                # Handle special JARVIS requests
+                if self.handle_memory_commands(user_input):
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+                
+                if self.handle_web_project_request(user_input):
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+                
+                if self.handle_vision_commands(user_input):
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+                
+                if self.handle_application_launch(user_input):
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+                    
+                if self.handle_system_info_request(user_input):
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return None
+                
+                # TIER 2: Pattern matching (fast)
+                command = self.match_pattern(user_input)
+                if command:
+                    print(f"⚡ Fast match: {command}")
+                    self.ai.speak("Executing command")
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return command
+                
+                # TIER 3: AI generation (slower)
+                print("🤖 JARVIS generating command...")
+                self.ai.speak("Let me generate that command")
+                
+                command = self.ai.generate_command(user_input, self.current_dir)
+                if command:
+                    print(f"🧠 JARVIS generated: {command}")
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return command
+                
+                # TIER 4: Assume it's a direct command
+                print("📝 Treating as direct command")
+                self.performance_monitor.end_operation(operation_data, success=True)
+                return user_input
             
-            # TIER 2: Pattern matching (fast)
-            command = self.match_pattern(user_input)
-            if command:
-                print(f"⚡ Fast match: {command}")
-                self.ai.speak("Executing command")
-                return command
-            
-            # TIER 3: AI generation (slower)
-            print("🤖 JARVIS generating command...")
-            self.ai.speak("Let me generate that command")
-            
-            command = self.ai.generate_command(user_input, self.current_dir)
-            if command:
-                print(f"🧠 JARVIS generated: {command}")
-                return command
-            
-            # TIER 4: Assume it's a direct command
-            print("📝 Treating as direct command")
+            # Fallback for unclassified input
+            self.performance_monitor.end_operation(operation_data, success=True)
             return user_input
-        
-        # Fallback for unclassified input
-        return user_input
+            
+        except Exception as e:
+            # Handle errors gracefully
+            error_result = self.error_handler.handle_error(e, "process_input", user_input)
+            self.ai.speak(error_result["user_message"])
+            print(f"❌ {error_result['user_message']}")
+            self.performance_monitor.end_operation(operation_data, success=False, error=error_result["error_type"])
+            return None
     
     def run(self):
         print("\n" + "="*60)

@@ -1,0 +1,82 @@
+{
+  "dev_setup:_testproject": {
+    "name": "Dev Setup: TestProject",
+    "description": "Complete development setup for TestProject",
+    "steps": [
+      {
+        "type": "speak",
+        "action": "Starting development workflow for TestProject",
+        "description": "Announce workflow start"
+      },
+      {
+        "type": "command",
+        "action": "mkdir -p playground/Projects/TestProject",
+        "description": "Create project directory for TestProject"
+      },
+      {
+        "type": "web_project",
+        "action": "create a website for TestProject",
+        "project_name": "TestProject",
+        "description": "Generate website files"
+      },
+      {
+        "type": "application",
+        "action": "code",
+        "description": "Open VS Code",
+        "delay": 2
+      },
+      {
+        "type": "speak",
+        "action": "Development environment ready for TestProject",
+        "description": "Confirm completion"
+      }
+    ],
+    "created": "2026-01-03T14:26:27.919946",
+    "last_run": null,
+    "run_count": 0,
+    "active": true
+  },
+  "daily_startup": {
+    "name": "Daily Startup",
+    "description": "Morning development environment setup",
+    "steps": [
+      {
+        "type": "speak",
+        "action": "Good morning! Starting your daily workflow",
+        "description": "Morning greeting"
+      },
+      {
+        "type": "application",
+        "action": "chrome",
+        "description": "Open Chrome browser",
+        "delay": 2
+      },
+      {
+        "type": "application",
+        "action": "code",
+        "description": "Open VS Code",
+        "delay": 2
+      },
+      {
+        "type": "application",
+        "action": "terminal",
+        "description": "Open terminal",
+        "delay": 1
+      },
+      {
+        "type": "command",
+        "action": "cd ~/code && ls -la",
+        "description": "Navigate to code directory"
+      },
+      {
+        "type": "speak",
+        "action": "Your development environment is ready. Have a productive day!",
+        "description": "Completion message"
+      }
+    ],
+    "created": "2026-01-03T14:26:36.278812",
+    "last_run": "2026-01-03T14:26:41.289306",
+    "run_count": 1,
+    "active": true
+  }
+}
