@@ -107,6 +107,27 @@ class AIHandler:
         thread.daemon = True
         thread.start()
 
+    def get_response(self, prompt):
+        """Get AI response for general queries"""
+        if not self.client:
+            return "AI not available"
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are JARVIS, an intelligent AI assistant. Be concise and direct."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=200,
+                temperature=0.3
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return f"AI Error: {str(e)}"
+
     def generate_command(self, user_input, current_dir):
         """Use Minimax M2.1 to generate command from natural language"""
         if not self.client:

@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Python",
+    "content": "Python is a high-level programming language with simple syntax",
+    "source": "tutorial",
+    "category": "programming",
+    "tags": [],
+    "created_at": "2026-01-03T19:54:52.449342",
+    "access_count": 1
+  },
+  {
+    "id": 2,
+    "title": "AI Development",
+    "content": "Artificial Intelligence development requires machine learning knowledge",
+    "source": "research",
+    "category": "ai",
+    "tags": [],
+    "created_at": "2026-01-03T19:54:52.767506",
+    "access_count": 0
+  }
+]

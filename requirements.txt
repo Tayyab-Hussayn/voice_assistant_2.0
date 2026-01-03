@@ -12,3 +12,5 @@ pyautogui>=0.9.54
 schedule>=1.2.0
 keyboard>=0.13.5
 rich>=13.0.0
+requests>=2.28.0
+beautifulsoup4>=4.12.0

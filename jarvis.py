@@ -10,6 +10,15 @@ from modules.file_system_manager import FileSystemManager
 from modules.search_system import SearchSystem
 from modules.pattern_matcher import PatternMatcher
 from modules.lsp_manager import CodeIntelligence
+from modules.web_search import WebSearch
+from modules.research_system import ResearchAnalysis
+from modules.knowledge_base import KnowledgeManager
+from modules.subagent_system import SubagentManager
+from modules.task_management import TaskManagement
+from modules.workflow_engine import WorkflowAutomation
+from modules.aws_integration import AWSIntegration
+from modules.infrastructure_management import InfrastructureIntegration
+from modules.security_compliance import SecurityCompliance
 from modules.memory_system import MemorySystem
 from modules.context_manager import ContextManager
 from modules.learning_system import LearningSystem
@@ -51,6 +60,15 @@ class JARVIS:
         self.search_system = SearchSystem()  # Advanced search system (Tool 2)
         self.pattern_matcher = PatternMatcher()  # Pattern matching system (Tool 3)
         self.code_intelligence = CodeIntelligence()  # LSP integration foundation (Tool 4)
+        self.web_search = WebSearch()  # Web search integration (Tool 7)
+        self.research = ResearchAnalysis(self.web_search, self.ai)  # Research system (Tool 9)
+        self.knowledge = KnowledgeManager()  # Knowledge base (Tool 10)
+        self.subagents = SubagentManager(self)  # Subagent system (Tool 13)
+        self.tasks = TaskManagement()  # Task management (Tool 14)
+        self.workflows = WorkflowAutomation(self)  # Workflow automation (Tool 15)
+        self.aws = AWSIntegration()  # AWS CLI integration (Tool 16)
+        self.infra = InfrastructureIntegration(self.aws.aws_manager)  # Infrastructure management (Tool 17)
+        self.security = SecurityCompliance(self.aws.aws_manager)  # Security & compliance (Tool 18)
         
         # Phase 4: Intelligence & Memory System
         self.memory = MemorySystem()  # Long-term memory
@@ -492,6 +510,119 @@ Voice Commands Examples:
             print("Available commands: /features, /status, /capabilities, /help, /stop, /cancel")
             return None
     
+    def _is_task_request(self, user_input):
+        """Detect if input is a natural language task request"""
+        task_indicators = [
+            'rename', 'move', 'copy', 'delete', 'remove', 'create', 'make',
+            'go to', 'navigate', 'find', 'search for', 'list', 'show',
+            'task:', 'execute:', 'i need you to', 'i want you to',
+            'please', 'can you', 'directory', 'folder', 'file'
+        ]
+        
+        user_lower = user_input.lower()
+        return any(indicator in user_lower for indicator in task_indicators)
+    
+    def _process_intelligent_task(self, user_input):
+        """Process natural language task with AI reasoning"""
+        print("🧠 JARVIS analyzing task...")
+        
+        # Use AI to understand the task and generate commands
+        task_prompt = f"""
+        You are JARVIS, an intelligent AI assistant. A user has given you this task:
+        "{user_input}"
+        
+        Analyze this task and determine what Linux/Unix commands need to be executed.
+        
+        Common tasks and their commands:
+        - Rename file/directory: mv old_name new_name
+        - Delete file: rm filename
+        - Delete directory: rmdir dirname or rm -rf dirname
+        - List directory: ls path
+        - Navigate: cd path
+        - Create directory: mkdir dirname
+        - Copy: cp source dest
+        - Find files: find path -name pattern
+        
+        Respond with ONLY the command(s) to execute, one per line. No explanations.
+        If the task involves multiple steps, list each command on a separate line.
+        Use absolute paths when possible (~/Pictures, ~/Downloads, etc.).
+        
+        For the given task, what command(s) should be executed?
+        """
+        
+        try:
+            # Get AI response for command generation
+            ai_response = self.ai.get_response(task_prompt)
+            
+            if ai_response and ai_response.strip():
+                print(f"🧠 JARVIS reasoned: {ai_response.strip()}")
+                
+                # Extract commands from AI response
+                commands = []
+                lines = ai_response.strip().split('\n')
+                
+                # Look for actual commands (lines that start with common command words or contain paths)
+                for line in lines:
+                    line = line.strip()
+                    # Skip thinking tags, explanations, and empty lines
+                    if (line and 
+                        not line.startswith('<think>') and 
+                        not line.startswith('</think>') and 
+                        not '<think>' in line and
+                        not line.startswith('The ') and
+                        not line.startswith('To ') and
+                        not line.startswith('Since ') and
+                        not line.startswith('So ') and
+                        not line.startswith('This ') and
+                        not line.endswith(':') and
+                        ('mv ' in line or 'ls ' in line or 'cd ' in line or 'rm ' in line or 'mkdir ' in line or 'cp ' in line)):
+                        
+                        # Clean up the command
+                        line = line.replace('```', '').replace('bash', '').strip()
+                        if line.startswith('- '):
+                            line = line[2:].strip()
+                        if line.startswith('`') and line.endswith('`'):
+                            line = line[1:-1].strip()
+                        if line:
+                            commands.append(line)
+                
+                # Execute each command
+                results = []
+                for command in commands:
+                    # Clean up the command (remove any markdown or extra formatting)
+                    command = command.replace('```', '').replace('bash', '').strip()
+                    if command.startswith('- '):
+                        command = command[2:].strip()
+                    
+                    print(f"🤖 JARVIS executing: {command}")
+                    
+                    # Execute the command using the system controller
+                    result = self.system.execute_command(command)
+                    results.append(result)
+                    
+                    if result.get('success'):
+                        print(f"✅ {result.get('output', 'Done')}")
+                    else:
+                        print(f"❌ {result.get('error', 'Command failed')}")
+                
+                # Return summary of results
+                successful = sum(1 for r in results if r.get('success'))
+                total = len(results)
+                
+                if successful == total:
+                    self.ai.speak("Task completed successfully")
+                    return f"✅ Task completed! Executed {total} commands successfully."
+                else:
+                    self.ai.speak("Task partially completed")
+                    return f"⚠️ Task partially completed. {successful}/{total} commands succeeded."
+            
+            else:
+                return "❌ Could not understand the task. Please be more specific."
+                
+        except Exception as e:
+            print(f"❌ Error in intelligent task processing: {str(e)}")
+            return f"❌ Error processing task: {str(e)}"
+
     def process_input(self, user_input):
         """Main input processing pipeline with intelligent intent classification"""
         print(f"\n🔍 JARVIS Processing: '{user_input}'")
@@ -503,6 +634,12 @@ Voice Commands Examples:
             # Handle special commands first
             if user_input.startswith('/'):
                 result = self.handle_special_commands(user_input)
+                self.performance_monitor.end_operation(operation_data, success=True)
+                return result
+            
+            # Enhanced intelligent task processing
+            if self._is_task_request(user_input):
+                result = self._process_intelligent_task(user_input)
                 self.performance_monitor.end_operation(operation_data, success=True)
                 return result
             
@@ -897,6 +1034,644 @@ Voice Commands Examples:
                 else:
                     self.performance_monitor.end_operation(operation_data, success=False)
                     return "❌ Usage: rename_symbol <file> <line> <character> <new_name> [--dry-run]"
+            
+            elif user_input.startswith('web_search '):
+                # Web search: web_search "Python tutorials"
+                query = user_input[11:].strip().strip('"')
+                
+                result = self.web_search.search(query)
+                
+                if result["success"]:
+                    if result["results"]:
+                        response = f"🌐 Found {result['num_results']} results for '{query}':\n\n"
+                        
+                        for i, res in enumerate(result["results"], 1):
+                            response += f"{i}. {res['title']}\n"
+                            response += f"   {res['snippet'][:100]}...\n"
+                            response += f"   🔗 {res['domain']}\n\n"
+                        
+                        response += f"Search completed in {result['search_time']:.2f}s"
+                        
+                        self.ai.speak(f"Found {result['num_results']} search results")
+                        return response
+                    else:
+                        self.ai.speak("No search results found")
+                        return "🔍 No results found for your search query"
+                else:
+                    self.ai.speak("Search failed")
+                    return f"❌ Search failed: {result['error']}"
+            
+            elif user_input.startswith('web_fetch '):
+                # Web content fetcher: web_fetch <url> [mode] [search_terms]
+                parts = user_input[10:].strip().split()
+                if not parts:
+                    return "❌ Usage: web_fetch <url> [selective|truncated|full] [search_terms]"
+                
+                url = parts[0]
+                mode = parts[1] if len(parts) > 1 else "selective"
+                search_terms = " ".join(parts[2:]) if len(parts) > 2 else None
+                
+                result = self.web_search.search_system.fetch_content(url, mode, search_terms)
+                
+                if result["success"]:
+                    response = f"📄 Content from {result['title']}\n"
+                    response += f"🔗 {result['url']}\n"
+                    response += f"📝 Mode: {result['mode']}\n\n"
+                    response += result['content']
+                    
+                    if result.get('truncated'):
+                        response += "\n\n⚠️ Content was truncated"
+                    
+                    self.ai.speak("Content fetched successfully")
+                    return response
+                else:
+                    self.ai.speak("Failed to fetch content")
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('quick_search '):
+                # Quick search with formatted response: quick_search "AI news"
+                query = user_input[13:].strip().strip('"')
+                
+                response = self.web_search.quick_search(query)
+                self.ai.speak("Search completed")
+                self.performance_monitor.end_operation(operation_data, success=True)
+                return response
+            
+            elif user_input.startswith('research '):
+                # Research command: research "AI development" [quick|medium|deep]
+                parts = user_input[9:].strip().split()
+                if not parts:
+                    return "❌ Usage: research <topic> [quick|medium|deep]"
+                
+                topic = parts[0].strip('"')
+                depth = parts[1] if len(parts) > 1 else "medium"
+                
+                response = self.research.research(topic, depth)
+                self.ai.speak("Research completed")
+                return response
+            
+            elif user_input.startswith('quick_research '):
+                # Quick research: quick_research "Python tutorials"
+                topic = user_input[15:].strip().strip('"')
+                
+                response = self.research.quick_research(topic)
+                self.ai.speak("Quick research completed")
+                return response
+            
+            elif user_input.startswith('analyze '):
+                # Content analysis: analyze "content" [summary|keywords|sentiment|structure]
+                parts = user_input[8:].strip().split('"')
+                if len(parts) < 2:
+                    return "❌ Usage: analyze \"content\" [summary|keywords|sentiment|structure]"
+                
+                content = parts[1]
+                analysis_type = parts[2].strip() if len(parts) > 2 else "summary"
+                
+                response = self.research.analyze(content, analysis_type)
+                self.ai.speak("Analysis completed")
+                return response
+            
+            elif user_input.startswith('kb_add '):
+                # Add knowledge: kb_add "title" "content" [source] [category]
+                parts = user_input[7:].strip().split('"')
+                if len(parts) < 4:
+                    return "❌ Usage: kb_add \"title\" \"content\" [source] [category]"
+                
+                title = parts[1]
+                content = parts[3]
+                source = parts[5] if len(parts) > 5 else ""
+                category = parts[7] if len(parts) > 7 else "general"
+                
+                response = self.knowledge.add(title, content, source, category)
+                self.ai.speak("Knowledge added")
+                return response
+            
+            elif user_input.startswith('kb_search '):
+                # Search knowledge: kb_search "query"
+                query = user_input[10:].strip().strip('"')
+                
+                response = self.knowledge.search(query)
+                self.ai.speak("Knowledge search completed")
+                return response
+            
+            elif user_input.startswith('kb_get '):
+                # Get knowledge entry: kb_get 123
+                try:
+                    entry_id = int(user_input[7:].strip())
+                    response = self.knowledge.get(entry_id)
+                    self.ai.speak("Knowledge retrieved")
+                    return response
+                except ValueError:
+                    return "❌ Usage: kb_get <entry_id>"
+            
+            elif user_input == 'kb_stats':
+                # Knowledge base statistics
+                response = self.knowledge.stats()
+                self.ai.speak("Knowledge statistics ready")
+                return response
+            
+            elif user_input.startswith('kb_update '):
+                # Update knowledge: kb_update 123 title="New Title" content="New Content"
+                parts = user_input[10:].strip().split()
+                if not parts:
+                    return "❌ Usage: kb_update <id> [title=\"...\"] [content=\"...\"] [source=\"...\"] [category=\"...\"]"
+                
+                try:
+                    entry_id = int(parts[0])
+                    kwargs = {}
+                    
+                    # Parse key=value pairs
+                    for part in parts[1:]:
+                        if '=' in part:
+                            key, value = part.split('=', 1)
+                            kwargs[key] = value.strip('"')
+                    
+                    response = self.knowledge.update(entry_id, **kwargs)
+                    self.ai.speak("Knowledge updated")
+                    return response
+                except ValueError:
+                    return "❌ Invalid entry ID"
+            
+            elif user_input.startswith('kb_delete '):
+                # Delete knowledge: kb_delete 123
+                try:
+                    entry_id = int(user_input[10:].strip())
+                    response = self.knowledge.delete(entry_id)
+                    self.ai.speak("Knowledge deleted")
+                    return response
+                except ValueError:
+                    return "❌ Usage: kb_delete <entry_id>"
+            
+            elif user_input.startswith('kb_list'):
+                # List knowledge: kb_list [category]
+                parts = user_input[7:].strip().split()
+                category = parts[0] if parts else None
+                
+                response = self.knowledge.list_entries(category)
+                self.ai.speak("Knowledge list ready")
+                return response
+            
+            elif user_input == 'kb_categories':
+                # List categories
+                response = self.knowledge.categories()
+                self.ai.speak("Categories ready")
+                return response
+            
+            elif user_input.startswith('kb_export'):
+                # Export knowledge: kb_export [category]
+                parts = user_input[9:].strip().split()
+                category = parts[0] if parts else None
+                
+                response = self.knowledge.export_knowledge(category)
+                self.ai.speak("Knowledge exported")
+                return response
+            
+            elif user_input.startswith('kb_import '):
+                # Import knowledge: kb_import filename.json
+                filename = user_input[10:].strip()
+                
+                response = self.knowledge.import_knowledge(filename)
+                self.ai.speak("Knowledge imported")
+                return response
+            
+            elif user_input == 'kb_backup':
+                # Create backup
+                response = self.knowledge.backup()
+                self.ai.speak("Backup created")
+                return response
+            
+            elif user_input.startswith('kb_semantic '):
+                # Semantic search: kb_semantic "query" [threshold]
+                parts = user_input[12:].strip().split()
+                if not parts:
+                    return "❌ Usage: kb_semantic \"query\" [threshold]"
+                
+                query = parts[0].strip('"')
+                threshold = float(parts[1]) if len(parts) > 1 else 0.1
+                
+                response = self.knowledge.semantic_search(query, threshold)
+                self.ai.speak("Semantic search completed")
+                return response
+            
+            elif user_input == 'kb_analyze':
+                # Knowledge graph analysis
+                response = self.knowledge.analyze_knowledge_graph()
+                self.ai.speak("Knowledge analysis ready")
+                return response
+            
+            elif user_input.startswith('kb_related '):
+                # Find related entries: kb_related 123
+                try:
+                    entry_id = int(user_input[11:].strip())
+                    response = self.knowledge.find_related(entry_id)
+                    self.ai.speak("Related entries found")
+                    return response
+                except ValueError:
+                    return "❌ Usage: kb_related <entry_id>"
+            
+            elif user_input == 'kb_insights':
+                # Knowledge insights
+                response = self.knowledge.knowledge_insights()
+                self.ai.speak("Knowledge insights ready")
+                return response
+            
+            elif user_input.startswith('agent_task '):
+                # Create subagent task: agent_task search query="Python programming"
+                parts = user_input[11:].strip().split()
+                if len(parts) < 2:
+                    return "❌ Usage: agent_task <type> <param>=<value> ..."
+                
+                task_type = parts[0]
+                kwargs = {}
+                
+                for part in parts[1:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        kwargs[key] = value.strip('"')
+                
+                response = self.subagents.create_task(task_type, **kwargs)
+                self.ai.speak("Subagent task created")
+                return response
+            
+            elif user_input.startswith('agent_status '):
+                # Get task status: agent_status abc123
+                task_id = user_input[13:].strip()
+                
+                response = self.subagents.task_status(task_id)
+                self.ai.speak("Task status ready")
+                return response
+            
+            elif user_input.startswith('agent_result '):
+                # Get task result: agent_result abc123
+                task_id = user_input[13:].strip()
+                
+                response = self.subagents.task_result(task_id)
+                self.ai.speak("Task result ready")
+                return response
+            
+            elif user_input.startswith('agent_workflow '):
+                # Create parallel workflow: agent_workflow "search:query=AI" "research:topic=ML"
+                tasks = user_input[15:].strip().split('" "')
+                tasks = [task.strip('"') for task in tasks]
+                
+                response = self.subagents.parallel_workflow(*tasks)
+                self.ai.speak("Parallel workflow created")
+                return response
+            
+            elif user_input.startswith('workflow_status '):
+                # Get workflow status: workflow_status def456
+                workflow_id = user_input[16:].strip()
+                
+                response = self.subagents.workflow_status(workflow_id)
+                self.ai.speak("Workflow status ready")
+                return response
+            
+            elif user_input == 'agent_system':
+                # Get system status
+                response = self.subagents.system_status()
+                self.ai.speak("System status ready")
+                return response
+            
+            elif user_input.startswith('task_add '):
+                # Add task: task_add "title" "description" priority category due_date
+                parts = user_input[9:].strip().split('"')
+                if len(parts) < 2:
+                    return "❌ Usage: task_add \"title\" [\"description\"] [priority] [category] [due_date]"
+                
+                title = parts[1]
+                description = parts[3] if len(parts) > 3 else ""
+                remaining = parts[4].strip().split() if len(parts) > 4 else []
+                
+                priority = remaining[0] if remaining else "medium"
+                category = remaining[1] if len(remaining) > 1 else "general"
+                due_date = remaining[2] if len(remaining) > 2 else None
+                
+                response = self.tasks.add(title, description, priority, category, due_date)
+                self.ai.speak("Task added")
+                return response
+            
+            elif user_input.startswith('task_list'):
+                # List tasks: task_list [status] [category]
+                parts = user_input[9:].strip().split()
+                status = parts[0] if parts else None
+                category = parts[1] if len(parts) > 1 else None
+                
+                response = self.tasks.list_tasks(status, category)
+                self.ai.speak("Task list ready")
+                return response
+            
+            elif user_input.startswith('task_complete '):
+                # Complete task: task_complete 123
+                try:
+                    task_id = int(user_input[14:].strip())
+                    response = self.tasks.complete(task_id)
+                    self.ai.speak("Task completed")
+                    return response
+                except ValueError:
+                    return "❌ Usage: task_complete <task_id>"
+            
+            elif user_input.startswith('task_update '):
+                # Update task: task_update 123 status=in_progress priority=high
+                parts = user_input[12:].strip().split()
+                if not parts:
+                    return "❌ Usage: task_update <task_id> <field>=<value> ..."
+                
+                try:
+                    task_id = int(parts[0])
+                    kwargs = {}
+                    
+                    for part in parts[1:]:
+                        if '=' in part:
+                            key, value = part.split('=', 1)
+                            kwargs[key] = value
+                    
+                    response = self.tasks.update(task_id, **kwargs)
+                    self.ai.speak("Task updated")
+                    return response
+                except ValueError:
+                    return "❌ Invalid task ID"
+            
+            elif user_input.startswith('task_delete '):
+                # Delete task: task_delete 123
+                try:
+                    task_id = int(user_input[12:].strip())
+                    response = self.tasks.delete(task_id)
+                    self.ai.speak("Task deleted")
+                    return response
+                except ValueError:
+                    return "❌ Usage: task_delete <task_id>"
+            
+            elif user_input == 'task_dashboard':
+                # Task dashboard
+                response = self.tasks.dashboard()
+                self.ai.speak("Task dashboard ready")
+                return response
+            
+            elif user_input.startswith('task_due'):
+                # Tasks due soon: task_due [days]
+                parts = user_input[8:].strip().split()
+                days = int(parts[0]) if parts else 7
+                
+                response = self.tasks.due_soon(days)
+                self.ai.speak("Due tasks ready")
+                return response
+            
+            elif user_input.startswith('workflow_create '):
+                # Create workflow: workflow_create "name" "description" [template]
+                parts = user_input[16:].strip().split('"')
+                if len(parts) < 2:
+                    return "❌ Usage: workflow_create \"name\" [\"description\"] [template]"
+                
+                name = parts[1]
+                description = parts[3] if len(parts) > 3 else ""
+                template = parts[4].strip() if len(parts) > 4 else None
+                
+                response = self.workflows.create(name, description, template)
+                self.ai.speak("Workflow created")
+                return response
+            
+            elif user_input.startswith('workflow_add_step '):
+                # Add workflow step: workflow_add_step wf_123 search query="AI"
+                parts = user_input[18:].strip().split()
+                if len(parts) < 2:
+                    return "❌ Usage: workflow_add_step <workflow_id> <step_type> <param>=<value> ..."
+                
+                workflow_id = parts[0]
+                step_type = parts[1]
+                kwargs = {}
+                
+                for part in parts[2:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        kwargs[key] = value.strip('"')
+                
+                response = self.workflows.add_step(workflow_id, step_type, **kwargs)
+                self.ai.speak("Workflow step added")
+                return response
+            
+            elif user_input.startswith('workflow_execute '):
+                # Execute workflow: workflow_execute wf_123 topic="AI development"
+                parts = user_input[17:].strip().split()
+                if not parts:
+                    return "❌ Usage: workflow_execute <workflow_id> [var=value] ..."
+                
+                workflow_id = parts[0]
+                kwargs = {}
+                
+                for part in parts[1:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        kwargs[key] = value.strip('"')
+                
+                response = self.workflows.execute(workflow_id, **kwargs)
+                self.ai.speak("Workflow started")
+                return response
+            
+            elif user_input.startswith('workflow_status '):
+                # Get workflow status: workflow_status wf_123
+                workflow_id = user_input[16:].strip()
+                
+                response = self.workflows.status(workflow_id)
+                self.ai.speak("Workflow status ready")
+                return response
+            
+            elif user_input == 'workflow_list':
+                # List workflows
+                response = self.workflows.list_workflows()
+                self.ai.speak("Workflow list ready")
+                return response
+            
+            elif user_input == 'workflow_templates':
+                # List workflow templates
+                response = self.workflows.templates()
+                self.ai.speak("Workflow templates ready")
+                return response
+            
+            elif user_input == 'aws_status':
+                # AWS CLI status
+                response = self.aws.status()
+                self.ai.speak("AWS status ready")
+                return response
+            
+            elif user_input == 'aws_s3':
+                # List S3 buckets
+                response = self.aws.s3_buckets()
+                self.ai.speak("S3 buckets ready")
+                return response
+            
+            elif user_input.startswith('aws_ec2'):
+                # List EC2 instances: aws_ec2 [region]
+                parts = user_input[7:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.aws.ec2_instances(region)
+                self.ai.speak("EC2 instances ready")
+                return response
+            
+            elif user_input.startswith('aws_lambda'):
+                # List Lambda functions: aws_lambda [region]
+                parts = user_input[10:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.aws.lambda_functions(region)
+                self.ai.speak("Lambda functions ready")
+                return response
+            
+            elif user_input == 'aws_iam':
+                # List IAM users
+                response = self.aws.iam_users()
+                self.ai.speak("IAM users ready")
+                return response
+            
+            elif user_input.startswith('aws_vpc'):
+                # List VPCs: aws_vpc [region]
+                parts = user_input[7:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.aws.vpcs(region)
+                self.ai.speak("VPCs ready")
+                return response
+            
+            elif user_input.startswith('aws_cf'):
+                # List CloudFormation stacks: aws_cf [region]
+                parts = user_input[6:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.aws.cloudformation_stacks(region)
+                self.ai.speak("CloudFormation stacks ready")
+                return response
+            
+            elif user_input.startswith('aws_rds'):
+                # List RDS instances: aws_rds [region]
+                parts = user_input[7:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.aws.rds_instances(region)
+                self.ai.speak("RDS instances ready")
+                return response
+            
+            elif user_input.startswith('aws_cmd '):
+                # Custom AWS command: aws_cmd service operation param=value
+                parts = user_input[8:].strip().split()
+                if len(parts) < 2:
+                    return "❌ Usage: aws_cmd <service> <operation> [param=value] ..."
+                
+                service = parts[0]
+                operation = parts[1]
+                kwargs = {}
+                
+                for part in parts[2:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        kwargs[key] = value
+                
+                response = self.aws.execute_custom(service, operation, **kwargs)
+                self.ai.speak("AWS command completed")
+                return response
+            
+            elif user_input == 'infra_templates':
+                # List infrastructure templates
+                response = self.infra.list_templates()
+                self.ai.speak("Infrastructure templates ready")
+                return response
+            
+            elif user_input.startswith('infra_template '):
+                # Get template details: infra_template simple_s3
+                template_id = user_input[15:].strip()
+                
+                response = self.infra.get_template(template_id)
+                self.ai.speak("Template details ready")
+                return response
+            
+            elif user_input.startswith('infra_deploy '):
+                # Deploy template: infra_deploy simple_s3 my-stack BucketName=my-bucket
+                parts = user_input[13:].strip().split()
+                if len(parts) < 2:
+                    return "❌ Usage: infra_deploy <template_id> <stack_name> [param=value] ..."
+                
+                template_id = parts[0]
+                stack_name = parts[1]
+                kwargs = {}
+                
+                for part in parts[2:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        kwargs[key] = value
+                
+                response = self.infra.deploy(template_id, stack_name, **kwargs)
+                self.ai.speak("Infrastructure deployment initiated")
+                return response
+            
+            elif user_input.startswith('infra_status '):
+                # Get stack status: infra_status my-stack
+                stack_name = user_input[13:].strip()
+                
+                response = self.infra.stack_status(stack_name)
+                self.ai.speak("Stack status ready")
+                return response
+            
+            elif user_input.startswith('infra_delete '):
+                # Delete stack: infra_delete my-stack
+                stack_name = user_input[13:].strip()
+                
+                response = self.infra.delete_stack(stack_name)
+                self.ai.speak("Stack deletion initiated")
+                return response
+            
+            elif user_input == 'infra_deployments':
+                # List deployments
+                response = self.infra.list_deployments()
+                self.ai.speak("Deployments ready")
+                return response
+            
+            elif user_input.startswith('infra_terraform '):
+                # Generate Terraform: infra_terraform simple_s3
+                template_id = user_input[16:].strip()
+                
+                response = self.infra.generate_terraform(template_id)
+                self.ai.speak("Terraform configuration ready")
+                return response
+            
+            elif user_input.startswith('security_scan_aws'):
+                # Scan AWS security: security_scan_aws [region]
+                parts = user_input[18:].strip().split()
+                region = parts[0] if parts else None
+                
+                response = self.security.scan_aws(region)
+                self.ai.speak("AWS security scan completed")
+                return response
+            
+            elif user_input.startswith('security_scan_code '):
+                # Scan code security: security_scan_code file.py
+                file_path = user_input[19:].strip()
+                
+                response = self.security.scan_code(file_path)
+                self.ai.speak("Code security scan completed")
+                return response
+            
+            elif user_input.startswith('security_compliance'):
+                # Check compliance: security_compliance [framework]
+                parts = user_input[19:].strip().split()
+                framework = parts[0] if parts else "cis_aws"
+                
+                response = self.security.check_compliance(framework)
+                self.ai.speak("Compliance check completed")
+                return response
+            
+            elif user_input.startswith('security_report'):
+                # Generate security report: security_report [scan_id]
+                parts = user_input[15:].strip().split()
+                scan_id = parts[0] if parts else None
+                
+                response = self.security.security_report(scan_id)
+                self.ai.speak("Security report ready")
+                return response
+            
+            elif user_input == 'security_history':
+                # Security scan history
+                response = self.security.scan_history()
+                self.ai.speak("Security history ready")
+                return response
             
             elif user_input.startswith('grep '):
                 # Parse grep command: grep "pattern" or grep "pattern" --include="*.py"
