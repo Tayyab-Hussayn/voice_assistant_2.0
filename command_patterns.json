@@ -1,0 +1,68 @@
+{
+  "navigation": {
+    "go back": "cd ..",
+    "go up": "cd ..",
+    "parent directory": "cd ..",
+    "go home": "cd ~",
+    "go to home": "cd ~",
+    "go to root": "cd /",
+    "go to desktop": "cd ~/Desktop",
+    "go to documents": "cd ~/Documents",
+    "go to downloads": "cd ~/Downloads"
+  },
+  "listing": {
+    "list files": "ls",
+    "list file": "ls",
+    "list": "ls",
+    "show files": "ls -lah",
+    "what's here": "ls -lah",
+    "show hidden files": "ls -la",
+    "list all": "ls -lah"
+  },
+  "display": {
+    "clear screen": "clear",
+    "clear": "clear",
+    "clean screen": "clear",
+    "show current directory": "pwd",
+    "where am i": "pwd",
+    "current location": "pwd",
+    "print working directory": "pwd"
+  },
+  "file_operations": {
+    "make directory": "mkdir",
+    "create folder": "mkdir",
+    "new folder": "mkdir",
+    "remove file": "rm",
+    "delete file": "rm",
+    "copy file": "cp",
+    "move file": "mv",
+    "rename file": "mv",
+    "create file": "touch",
+    "new file": "touch"
+  },
+  "system": {
+    "disk usage": "df -h",
+    "free space": "df -h",
+    "memory usage": "free -h",
+    "show processes": "ps aux",
+    "network status": "ip a",
+    "system info": "uname -a",
+    "who am i": "whoami",
+    "current time": "date",
+    "uptime": "uptime",
+    "cpu info": "lscpu"
+  },
+  "search": {
+    "find file": "find . -name",
+    "search file": "find . -name",
+    "locate": "locate",
+    "search in files": "grep -r"
+  },
+  "jarvis_commands": {
+    "jarvis status": "echo 'JARVIS online and operational'",
+    "jarvis help": "echo 'JARVIS commands: create web project, open application, system info, or any Linux command'",
+    "scan system": "df -h && free -h && uptime",
+    "security scan": "ps aux | grep -E '(ssh|ftp|http)'",
+    "jarvis diagnostics": "echo 'Running diagnostics...' && df -h && free -h && uptime && ps aux | wc -l"
+  }
+}

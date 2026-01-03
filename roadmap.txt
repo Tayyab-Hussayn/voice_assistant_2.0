@@ -1,0 +1,143 @@
+# 🤖 JARVIS-Like AI Assistant Development Roadmap
+
+## Phase 1: Foundation & Core Setup (Week 1-2)
+
+### 1.1 Minimax M2.1 Integration
+- **Setup OpenAI SDK with Minimax**:
+  ```bash
+  pip install openai
+  export OPENAI_BASE_URL=https://api.minimax.io/v1
+  export OPENAI_API_KEY=your_minimax_key
+  ```
+- **Replace current Gemini integration** with Minimax M2.1
+- **Implement reasoning_split=True** for enhanced thinking capabilities
+- **Add streaming support** for real-time responses
+
+### 1.2 Enhanced Voice System
+- **Bidirectional voice communication**:
+  - Input: Google Speech Recognition (keep current)
+  - Output: Add TTS (pyttsx3 or gTTS for Linux)
+- **Wake word detection** ("Hey JARVIS")
+- **Voice activity detection** for natural conversation flow
+
+## Phase 2: System Control & Automation (Week 3-4)
+
+### 2.1 Linux/Hyprland Integration
+- **Window management**: Focus, move, resize windows
+- **Application control**: Launch, close, switch applications
+- **File system operations**: Create, move, delete files/folders
+- **System monitoring**: CPU, memory, disk usage
+- **Process management**: Kill processes, check running apps
+
+### 2.2 Tool Calling Framework
+- **Implement function calling** with Minimax M2.1
+- **Core tools**:
+  - File operations (create, read, write, delete)
+  - System commands (execute bash safely)
+  - Application launcher
+  - Web browser control
+  - Text editor integration
+
+## Phase 3: Advanced Capabilities (Week 5-6)
+
+### 3.1 Web Development Automation
+- **Code generation**: HTML, CSS, JS from voice commands
+- **File creation**: Automatic project structure setup
+- **Browser integration**: Auto-open in Chrome
+- **Live reload**: Watch files and refresh browser
+
+### 3.2 Computer Vision & Gesture Control
+- **Screen capture**: Take screenshots for context
+- **Hand tracking**: OpenCV + MediaPipe integration
+- **Gesture recognition**: Basic gestures for system control
+- **Visual feedback**: On-screen indicators
+
+## Phase 4: Intelligence & Memory (Week 7-8)
+
+### 4.1 Long-term Memory System
+- **Project management**: Create/switch between projects
+- **Conversation history**: Persistent chat logs
+- **Context awareness**: Remember previous tasks
+- **File-based memory**: Store important information
+
+### 4.2 Hierarchical AI Architecture
+- **Main coordinator**: Minimax M2.1 as primary brain
+- **Specialized agents**: 
+  - Code generation specialist
+  - System administration agent
+  - Web automation agent
+  - Creative tasks agent
+
+## Phase 5: Advanced Features (Week 9-10)
+
+### 5.1 Smart Home Integration
+- **Device discovery**: Scan for smart devices
+- **Control protocols**: Support for common IoT standards
+- **Voice commands**: "Turn on lights", "Set temperature"
+
+### 5.2 Workflow Automation
+- **Task chaining**: Execute multiple commands in sequence
+- **Conditional logic**: If-then-else workflows
+- **Scheduled tasks**: Cron-like functionality
+- **Error handling**: Graceful failure recovery
+
+## Phase 6: Polish & Optimization (Week 11-12)
+
+### 6.1 User Experience
+- **GUI interface**: Optional visual dashboard
+- **Voice feedback**: Confirmation of actions
+- **Error messages**: Clear, helpful responses
+- **Performance optimization**: Reduce latency
+
+### 6.2 Security & Safety
+- **Command validation**: Prevent dangerous operations
+- **User confirmation**: For critical system changes
+- **Sandboxing**: Isolate risky operations
+- **Audit logging**: Track all system changes
+
+## Technical Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Voice Input   │───▶│  Minimax M2.1    │───▶│  Tool Executor  │
+│  (Speech-to-    │    │  (Main Brain)    │    │  (System Ctrl)  │
+│   Text)         │    │                  │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         ▲                       │                       │
+         │                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Voice Output   │◀───│  Response Gen    │    │  System APIs    │
+│  (Text-to-      │    │  (Formatting)    │    │  (Linux/Hypr)   │
+│   Speech)       │    │                  │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+## Key Capabilities to Implement
+
+1. **System Control**: Window management, app launching, file operations
+2. **Code Generation**: Create web projects, scripts, configurations
+3. **Web Automation**: Browser control, form filling, data extraction
+4. **Smart Home**: Device control, automation routines
+5. **Project Management**: Create, organize, track development projects
+6. **Voice Interaction**: Natural conversation, context awareness
+7. **Visual Processing**: Screenshot analysis, gesture recognition
+8. **Memory System**: Long-term storage, context switching
+9. **Safety Features**: Command validation, user confirmation
+10. **Performance**: Fast response times, efficient resource usage
+
+## Development Priorities
+
+**Critical Path**:
+1. Fix current syntax errors
+2. Integrate Minimax M2.1
+3. Add TTS for voice output
+4. Implement basic system control
+5. Add web development automation
+
+**Next Steps**:
+- Start with Phase 1 foundation
+- Build incrementally, testing each feature
+- Focus on core functionality before advanced features
+- Maintain security and safety throughout
+
+This roadmap will transform your basic voice shell into a comprehensive JARVIS-like assistant capable of controlling your entire Arch Linux/Hyprland system through natural voice commands.
