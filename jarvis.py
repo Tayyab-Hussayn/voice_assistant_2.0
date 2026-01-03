@@ -4,7 +4,11 @@ from modules.ai_handler import AIHandler
 from modules.system_controller import SystemController
 from modules.command_processor import CommandProcessor
 from modules.conversational_ai import ConversationalAI
-from modules.web_developer import WebDeveloper
+from modules.intelligent_web_builder import IntelligentWebBuilder
+from modules.memory_system import MemorySystem
+from modules.context_manager import ContextManager
+from modules.learning_system import LearningSystem
+from modules.task_scheduler import TaskScheduler
 import os
 import json
 import time
@@ -29,9 +33,19 @@ class JARVIS:
         self.voice = VoiceInput()
         self.system = SystemController()
         self.command_processor = CommandProcessor()
-        self.conversation_ai = ConversationalAI(self.ai)  # New conversational AI
+        self.conversation_ai = ConversationalAI(self.ai)  # Conversational AI
         self.computer_vision = ComputerVision() if VISION_AVAILABLE else None  # Optional computer vision
-        self.web_developer = WebDeveloper()  # New web developer
+        self.web_developer = IntelligentWebBuilder(self.ai)  # Intelligent web builder
+        
+        # Phase 4: Intelligence & Memory System
+        self.memory = MemorySystem()  # Long-term memory
+        self.context_manager = ContextManager(self.memory)  # Context switching
+        self.learning_system = LearningSystem(self.memory)  # Learning from interactions
+        self.task_scheduler = TaskScheduler(self)  # Task scheduling
+        
+        # Start scheduler
+        self.task_scheduler.start_scheduler()
+        
         self.wake_word_mode = False
         self.vision_active = False
         
@@ -88,51 +102,31 @@ class JARVIS:
         return any(pattern in cmd_lower for pattern in dangerous_patterns)
     
     def handle_web_project_request(self, user_input):
-        """Handle advanced web project creation requests"""
-        if "web" in user_input and ("create" in user_input or "build" in user_input or "make" in user_input):
-            # Extract project details
+        """Handle intelligent web page creation requests"""
+        web_keywords = ["web", "website", "webpage", "page", "site"]
+        create_keywords = ["create", "build", "make", "generate", "design"]
+        
+        # Check if this is a web creation request
+        has_web_keyword = any(keyword in user_input.lower() for keyword in web_keywords)
+        has_create_keyword = any(keyword in user_input.lower() for keyword in create_keywords)
+        
+        if has_web_keyword and has_create_keyword:
+            # Extract project name if specified
             words = user_input.split()
-            project_name = "web_project"
-            template = "simple"
-            framework = "vanilla"
+            project_name = None
             
-            # Extract project name
             for i, word in enumerate(words):
                 if word in ["called", "named"] and i + 1 < len(words):
                     project_name = words[i + 1]
                     break
-                elif word in ["create", "build", "make"] and i + 1 < len(words) and words[i + 1] not in ["a", "an", "the", "web"]:
-                    project_name = words[i + 1]
-                    break
             
-            # Extract template type
-            if "portfolio" in user_input:
-                template = "portfolio"
-            elif "dashboard" in user_input:
-                template = "dashboard"
-            elif "landing" in user_input:
-                template = "landing"
-            elif "blog" in user_input:
-                template = "blog"
-            
-            # Extract framework
-            if "react" in user_input:
-                framework = "react"
-            elif "bootstrap" in user_input:
-                framework = "bootstrap"
-            elif "vue" in user_input:
-                framework = "vue"
-            
-            self.ai.speak(f"Creating {template} web project with {framework}")
-            success, message = self.web_developer.create_web_project(project_name, template, framework)
+            self.ai.speak("Analyzing your web page requirements and building a custom solution")
+            success, message = self.web_developer.build_intelligent_webpage(user_input, project_name)
             
             if success:
-                # Start dev server and open in browser
-                project_path = Path.cwd() / project_name
-                self.web_developer.start_dev_server(project_path)
-                self.ai.speak(f"Web project {project_name} created and opened in browser!")
+                self.ai.speak("Custom web page created in Web Projects folder and opened in browser!")
             else:
-                self.ai.speak(f"Error creating web project: {message}")
+                self.ai.speak(f"Error creating web page: {message}")
             
             return True
         

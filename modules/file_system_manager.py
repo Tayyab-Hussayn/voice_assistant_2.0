@@ -3,10 +3,12 @@ import shutil
 import subprocess
 from pathlib import Path
 import mimetypes
+from modules.workspace_manager import WorkspaceManager
 
 class FileSystemManager:
     def __init__(self):
         self.current_dir = Path.cwd()
+        self.workspace_manager = WorkspaceManager()
         
     def create_directory(self, dir_name, path=None):
         """Create a directory"""
