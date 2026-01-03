@@ -2,17 +2,25 @@ import subprocess
 import os
 import json
 import webbrowser
+import signal
+import threading
 from pathlib import Path
 
 class SystemController:
     def __init__(self):
         self.current_dir = Path.cwd()
+        self.running_process = None
         
     def execute_command(self, command):
-        """Execute a shell command safely"""
+        """Execute a shell command safely with interrupt capability"""
         try:
             os.chdir(self.current_dir)
             
+            # For long-running commands, use Popen for control
+            if any(cmd in command.lower() for cmd in ['npm install', 'npm i', 'pip install', 'yarn install', 'make', 'cmake']):
+                return self._execute_interruptible_command(command)
+            
+            # For quick commands, use run
             result = subprocess.run(
                 command,
                 shell=True,
@@ -32,6 +40,50 @@ class SystemController:
             return {"success": False, "error": "Command timeout"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+    
+    def _execute_interruptible_command(self, command):
+        """Execute command that can be interrupted"""
+        try:
+            self.running_process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                preexec_fn=os.setsid  # Create new process group
+            )
+            
+            stdout, stderr = self.running_process.communicate(timeout=300)  # 5 min timeout
+            
+            if self.running_process.returncode == 0:
+                return {"success": True, "output": stdout}
+            else:
+                return {"success": False, "error": stderr}
+                
+        except subprocess.TimeoutExpired:
+            self.stop_current_process()
+            return {"success": False, "error": "Command timeout (5 minutes)"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+        finally:
+            self.running_process = None
+    
+    def stop_current_process(self):
+        """Stop the currently running process (Ctrl+C equivalent)"""
+        if self.running_process:
+            try:
+                # Send SIGTERM to process group
+                os.killpg(os.getpgid(self.running_process.pid), signal.SIGTERM)
+                self.running_process.wait(timeout=5)
+                return {"success": True, "message": "Process stopped"}
+            except:
+                # Force kill if SIGTERM doesn't work
+                try:
+                    os.killpg(os.getpgid(self.running_process.pid), signal.SIGKILL)
+                    return {"success": True, "message": "Process force killed"}
+                except:
+                    return {"success": False, "error": "Could not stop process"}
+        return {"success": False, "error": "No running process"}
     
     def create_web_project(self, project_name, content_type="simple"):
         """Create a web project with HTML, CSS, JS"""

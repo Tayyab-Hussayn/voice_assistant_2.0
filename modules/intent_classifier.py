@@ -16,12 +16,23 @@ class IntentClassifier:
                 'file', 'folder', 'directory', 'application', 'app', 'program', 'process',
                 'window', 'browser', 'terminal', 'website', 'webpage', 'project', 'script'
             ],
+            'terminal_commands': [
+                'ls', 'cd', 'pwd', 'mkdir', 'rmdir', 'rm', 'cp', 'mv', 'chmod', 'chown',
+                'ps', 'top', 'htop', 'kill', 'killall', 'grep', 'find', 'locate', 'which',
+                'cat', 'less', 'more', 'head', 'tail', 'echo', 'printf', 'touch', 'ln',
+                'tar', 'zip', 'unzip', 'wget', 'curl', 'ssh', 'scp', 'rsync', 'df', 'du',
+                'free', 'uname', 'whoami', 'id', 'groups', 'sudo', 'su', 'history',
+                'alias', 'export', 'env', 'printenv', 'source', 'bash', 'sh', 'python',
+                'node', 'npm', 'git', 'vim', 'nano', 'emacs', 'code'
+            ],
             'command_patterns': [
                 r'^(open|launch|start|run)\s+\w+',
                 r'^(create|make|build)\s+\w+',
                 r'^(delete|remove|kill)\s+\w+',
                 r'^(show|list|display)\s+\w+',
-                r'^(go to|navigate to|cd)\s+\w+'
+                r'^(go to|navigate to|cd)\s+\w+',
+                r'^\w+\s+(-\w+|\|\s*\w+)',  # Commands with flags or pipes
+                r'^\w+\s+\w+\.\w+',  # Commands with file extensions
             ]
         }
         
@@ -114,6 +125,11 @@ class IntentClassifier:
     def _calculate_command_score(self, user_input):
         """Calculate how likely the input is a command"""
         score = 0
+        
+        # Check for direct terminal commands (high priority)
+        first_word = user_input.split()[0] if user_input.split() else ""
+        if first_word in self.command_indicators['terminal_commands']:
+            score += 5  # High score for direct terminal commands
         
         # Check action verbs
         for verb in self.command_indicators['action_verbs']:

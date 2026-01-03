@@ -467,9 +467,20 @@ Voice Commands Examples:
                         self.ai.speak(f"Interactive workflow {workflow_name} created successfully")
             return None
         
+        elif cmd == '/stop' or cmd == '/cancel':
+            # Stop current running process
+            result = self.system.stop_current_process()
+            if result["success"]:
+                print(f"✅ {result['message']}")
+                self.ai.speak("Process stopped successfully")
+            else:
+                print(f"❌ {result['error']}")
+                self.ai.speak("No process to stop or failed to stop process")
+            return None
+        
         else:
             print(f"Unknown command: {command}")
-            print("Available commands: /features, /status, /capabilities, /help")
+            print("Available commands: /features, /status, /capabilities, /help, /stop, /cancel")
             return None
     
     def process_input(self, user_input):
