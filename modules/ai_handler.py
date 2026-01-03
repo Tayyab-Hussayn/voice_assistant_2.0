@@ -50,12 +50,39 @@ class AIHandler:
             print("🔇 Running in silent mode - JARVIS will not speak")
             self.tts_available = False
 
+    def clean_text_for_speech(self, text):
+        """Clean text for speech by removing symbols and formatting"""
+        import re
+        
+        # Remove markdown formatting
+        text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # **bold** -> bold
+        text = re.sub(r'\*([^*]+)\*', r'\1', text)      # *italic* -> italic
+        text = re.sub(r'`([^`]+)`', r'\1', text)        # `code` -> code
+        
+        # Remove quotes and brackets
+        text = re.sub(r'["\'\[\]{}()]', '', text)       # Remove quotes and brackets
+        
+        # Remove special symbols but keep basic punctuation
+        text = re.sub(r'[#@$%^&*+=|\\<>~`]', '', text)  # Remove symbols
+        
+        # Clean up multiple spaces and newlines
+        text = re.sub(r'\s+', ' ', text)                # Multiple spaces -> single space
+        text = re.sub(r'\n+', '. ', text)               # Newlines -> periods
+        
+        # Remove leading/trailing whitespace
+        text = text.strip()
+        
+        return text
+
     def speak(self, text):
         """Convert text to speech with multiple fallback methods"""
+        # Clean text before speaking
+        clean_text = self.clean_text_for_speech(text)
+        
         if not self.tts_available:
             # Fallback to espeak-ng directly
             try:
-                subprocess.run(['espeak-ng', text], 
+                subprocess.run(['espeak-ng', clean_text], 
                              stdout=subprocess.DEVNULL, 
                              stderr=subprocess.DEVNULL, 
                              timeout=10)
@@ -69,7 +96,7 @@ class AIHandler:
             
         def _speak():
             try:
-                self.tts_engine.say(text)
+                self.tts_engine.say(clean_text)
                 self.tts_engine.runAndWait()
             except Exception as e:
                 print(f"🤖 JARVIS: {text}")

@@ -38,11 +38,22 @@ MINIMAX_API_KEY=your_minimax_api_key_here
 ```
 
 ### 3. Run JARVIS
+
+#### Option A: Terminal CLI (Recommended)
+```bash
+# Launch elegant terminal interface (Gemini CLI style)
+python jarvis_cli.py
+
+# Or use the launcher script
+./launch_tui.sh
+```
+
+#### Option B: Classic Terminal Mode
 ```bash
 # Activate virtual environment
 source venv/bin/activate
 
-# Launch JARVIS
+# Launch classic JARVIS
 python jarvis.py
 ```
 
@@ -83,11 +94,17 @@ python jarvis.py
 ```
 voice_shell_mini/
 ├── jarvis.py              # Main JARVIS application
+├── jarvis_cli.py          # Terminal CLI interface (Gemini CLI style)
+├── launch_tui.sh          # CLI launcher script
+├── tui_options.sh         # Interface comparison guide
 ├── voiceshell.py          # Legacy voice shell (backup)
 ├── modules/
 │   ├── ai_handler.py      # Minimax M2.1 integration + TTS
 │   ├── voice_input.py     # Speech recognition + wake word
 │   ├── system_controller.py # System operations + web projects
+│   ├── intent_classifier.py # Intelligent command classification
+│   ├── memory_system.py   # Persistent memory and learning
+│   ├── workflow_engine.py # Automated task sequences
 │   └── __init__.py
 ├── command_patterns.json  # Fast command patterns
 ├── requirements.txt       # Python dependencies
