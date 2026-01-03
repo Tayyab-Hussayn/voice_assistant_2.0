@@ -1,7 +1,7 @@
 #!/bin/bash
-# JARVIS CLI Launcher Script
+# JARVIS Enhanced CLI Launcher Script
 
-echo "🤖 Starting JARVIS CLI..."
+echo "🤖 Starting JARVIS Enhanced CLI..."
 
 # Activate virtual environment
 source venv/bin/activate
@@ -10,6 +10,7 @@ source venv/bin/activate
 echo "📦 Checking dependencies..."
 pip install -q rich
 
-# Launch CLI Interface
-echo "🚀 Launching JARVIS Terminal Interface..."
+# Launch Enhanced CLI Interface
+echo "🚀 Launching JARVIS Enhanced Terminal Interface..."
+echo "✨ Features: Status indicators, Ctrl+C interrupts, Project analysis"
 python jarvis_cli.py
