@@ -3,6 +3,9 @@ from modules.voice_input import VoiceInput
 from modules.ai_handler import AIHandler
 from modules.system_controller import SystemController
 from modules.command_processor import CommandProcessor
+from modules.conversational_ai import ConversationalAI
+from modules.computer_vision import ComputerVision
+from modules.web_developer import WebDeveloper
 import os
 import json
 import time
@@ -18,8 +21,12 @@ class JARVIS:
         self.ai = AIHandler() 
         self.voice = VoiceInput()
         self.system = SystemController()
-        self.command_processor = CommandProcessor()  # New enhanced processor
+        self.command_processor = CommandProcessor()
+        self.conversation_ai = ConversationalAI(self.ai)  # New conversational AI
+        self.computer_vision = ComputerVision()  # New computer vision
+        self.web_developer = WebDeveloper()  # New web developer
         self.wake_word_mode = False
+        self.vision_active = False
         
         # JARVIS personality responses
         self.responses = {
@@ -74,32 +81,53 @@ class JARVIS:
         return any(pattern in cmd_lower for pattern in dangerous_patterns)
     
     def handle_web_project_request(self, user_input):
-        """Handle web project creation requests"""
+        """Handle advanced web project creation requests"""
         if "web" in user_input and ("create" in user_input or "build" in user_input or "make" in user_input):
-            # Extract project name
+            # Extract project details
             words = user_input.split()
             project_name = "web_project"
+            template = "simple"
+            framework = "vanilla"
             
-            # Try to find project name
+            # Extract project name
             for i, word in enumerate(words):
                 if word in ["called", "named"] and i + 1 < len(words):
                     project_name = words[i + 1]
                     break
-                elif word in ["create", "build", "make"] and i + 1 < len(words) and words[i + 1] not in ["a", "an", "the"]:
+                elif word in ["create", "build", "make"] and i + 1 < len(words) and words[i + 1] not in ["a", "an", "the", "web"]:
                     project_name = words[i + 1]
                     break
             
-            self.ai.speak("Creating web project now!")
-            project_path = self.system.create_web_project(project_name)
+            # Extract template type
+            if "portfolio" in user_input:
+                template = "portfolio"
+            elif "dashboard" in user_input:
+                template = "dashboard"
+            elif "landing" in user_input:
+                template = "landing"
+            elif "blog" in user_input:
+                template = "blog"
             
-            # Open in browser
-            index_file = project_path / "index.html"
-            if self.system.open_in_browser(index_file):
+            # Extract framework
+            if "react" in user_input:
+                framework = "react"
+            elif "bootstrap" in user_input:
+                framework = "bootstrap"
+            elif "vue" in user_input:
+                framework = "vue"
+            
+            self.ai.speak(f"Creating {template} web project with {framework}")
+            success, message = self.web_developer.create_web_project(project_name, template, framework)
+            
+            if success:
+                # Start dev server and open in browser
+                project_path = Path.cwd() / project_name
+                self.web_developer.start_dev_server(project_path)
                 self.ai.speak(f"Web project {project_name} created and opened in browser!")
-                return True
             else:
-                self.ai.speak(f"Web project {project_name} created successfully!")
-                return True
+                self.ai.speak(f"Error creating web project: {message}")
+            
+            return True
         
         return False
     
@@ -149,11 +177,55 @@ class JARVIS:
         
         return False
     
+    def handle_vision_commands(self, user_input):
+        """Handle computer vision and gesture control commands"""
+        if "start vision" in user_input or "enable vision" in user_input or "gesture control" in user_input:
+            self.ai.speak("Starting computer vision and gesture control")
+            success, message = self.computer_vision.start_gesture_control()
+            if success:
+                self.vision_active = True
+                self.ai.speak("Vision system active. Use gestures to control your computer.")
+            else:
+                self.ai.speak(f"Vision error: {message}")
+            return True
+        
+        elif "stop vision" in user_input or "disable vision" in user_input:
+            self.ai.speak("Stopping computer vision")
+            success, message = self.computer_vision.stop_camera()
+            self.vision_active = False
+            self.ai.speak("Vision system stopped")
+            return True
+        
+        elif "take screenshot" in user_input or "screenshot" in user_input:
+            self.ai.speak("Taking screenshot")
+            success, message = self.computer_vision.take_screenshot()
+            self.ai.speak(message)
+            return True
+        
+        elif "analyze screen" in user_input:
+            self.ai.speak("Analyzing screen content")
+            success, result = self.computer_vision.analyze_screen()
+            if success:
+                self.ai.speak(f"Screen analysis complete. Found {result['ui_elements']} UI elements.")
+            else:
+                self.ai.speak(f"Screen analysis failed: {result}")
+            return True
+        
+        return False
+    
     def process_input(self, user_input):
         """Main input processing pipeline with JARVIS intelligence"""
         print(f"\n🔍 JARVIS Processing: '{user_input}'")
         
-        # TIER 0: Enhanced command processing (new modular system)
+        # TIER 0: Check for conversational input first
+        if self.conversation_ai.is_conversational_input(user_input):
+            success, response = self.conversation_ai.handle_conversation(user_input)
+            if success:
+                self.ai.speak(response)
+                print(f"💬 {response}")
+                return None
+        
+        # TIER 1: Enhanced command processing (modular system)
         result = self.command_processor.process_command(user_input)
         if result is not None:
             success, message = result
@@ -169,20 +241,23 @@ class JARVIS:
         if self.handle_web_project_request(user_input):
             return None
         
+        if self.handle_vision_commands(user_input):
+            return None
+        
         if self.handle_application_launch(user_input):
             return None
             
         if self.handle_system_info_request(user_input):
             return None
         
-        # TIER 1: Pattern matching (fast)
+        # TIER 2: Pattern matching (fast)
         command = self.match_pattern(user_input)
         if command:
             print(f"⚡ Fast match: {command}")
             self.ai.speak("Executing command")
             return command
         
-        # TIER 2: AI generation (slower)
+        # TIER 3: AI generation (slower)
         print("🤖 JARVIS thinking...")
         self.ai.speak("Let me think about that")
         
@@ -191,14 +266,14 @@ class JARVIS:
             print(f"🧠 JARVIS generated: {command}")
             return command
         
-        # TIER 3: Advanced AI processing
+        # TIER 4: Advanced AI processing
         advanced_response = self.ai.process_advanced_request(user_input, self.current_dir)
         if advanced_response:
             self.ai.speak("I understand. Let me handle that for you.")
             print(f"🎯 Advanced processing: {advanced_response}")
             return None
         
-        # TIER 4: Assume it's a direct command
+        # TIER 5: Assume it's a direct command
         print("📝 Treating as direct command")
         return user_input
     

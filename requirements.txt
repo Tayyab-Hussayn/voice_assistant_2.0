@@ -6,3 +6,6 @@ pyaudio>=0.2.11
 numpy>=1.24.0
 pathlib2>=2.3.7
 psutil>=5.9.0
+opencv-python>=4.8.0
+mediapipe>=0.10.0
+pyautogui>=0.9.54
