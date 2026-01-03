@@ -4,8 +4,10 @@ from datetime import datetime
 from pathlib import Path
 
 class ConversationalAI:
-    def __init__(self, ai_handler):
+    def __init__(self, ai_handler, feature_discovery=None):
         self.ai_handler = ai_handler
+        self.feature_discovery = feature_discovery
+        self.memory_system = None  # Will be set by JARVIS
         self.conversation_history = []
         self.context_memory = {}
         self.personality_traits = {
@@ -27,7 +29,7 @@ class ConversationalAI:
                 'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'
             ],
             'questions_about_self': [
-                'who are you', 'what are you', 'tell me about yourself', 'what can you do'
+                'who are you', 'what are you', 'tell me about yourself', 'what can you do', 'your capabilities', 'your features'
             ],
             'status_inquiries': [
                 'how are you', 'status', 'are you okay', 'how do you feel'
@@ -108,7 +110,8 @@ class ConversationalAI:
             ],
             'questions_about_self': [
                 "I'm JARVIS, your advanced AI assistant. I can control your system, manage files, recognize gestures, create web projects, and have conversations like this one. Think of me as your digital companion for productivity and automation.",
-                "I'm an AI assistant inspired by Tony Stark's JARVIS. I specialize in system control, automation, and making your computing experience more intuitive through voice commands and gesture recognition."
+                "I'm an AI assistant inspired by Tony Stark's JARVIS. I specialize in system control, automation, and making your computing experience more intuitive through voice commands and gesture recognition.",
+                self.get_capabilities_response()
             ],
             'status_inquiries': [
                 "I'm operating at full capacity! All systems are green and ready for action.",
@@ -137,6 +140,13 @@ class ConversationalAI:
         """Main conversation handler"""
         conversation_type = self.detect_conversation_type(user_input)
         
+        # Check memory first for personal questions
+        if self.memory_system and ("remember" in user_input.lower() or "my name" in user_input.lower() or "do you know" in user_input.lower()):
+            memory_response = self.check_memory_for_response(user_input)
+            if memory_response:
+                self.add_to_conversation(user_input, memory_response)
+                return True, memory_response
+        
         # Try personality response first
         personality_response = self.generate_personality_response(conversation_type, user_input)
         if personality_response:
@@ -154,12 +164,20 @@ class ConversationalAI:
         if not self.ai_handler.client:
             return False, "AI conversation not available - no API key configured"
         
-        # Build context from recent conversation
+        # Build context from recent conversation and memory
         context = ""
         if self.conversation_history:
             recent_history = self.conversation_history[-3:]  # Last 3 exchanges
             for exchange in recent_history:
                 context += f"User: {exchange['user']}\nJARVIS: {exchange['jarvis']}\n"
+        
+        # Add memory context if available
+        if self.memory_system:
+            user_info = self.memory_system.recall_knowledge("user_info")
+            if user_info:
+                context += "\nWhat I know about the user:\n"
+                for key, value in user_info.items():
+                    context += f"- {key}: {value}\n"
         
         system_prompt = f"""You are JARVIS, an advanced AI assistant inspired by Tony Stark's AI from Marvel. 
 
@@ -176,6 +194,9 @@ Your capabilities include:
 - Computer vision and gesture recognition
 - Web development assistance
 - General knowledge and conversation
+- Long-term memory and learning
+
+You have access to persistent memory and can remember information about users between conversations.
 
 Keep responses concise but informative. Use a tone that's professional yet personable.
 
@@ -220,11 +241,63 @@ Respond as JARVIS would - helpful, intelligent, and with subtle personality."""
     
     def is_conversational_input(self, user_input):
         """Check if input is conversational rather than a command"""
+        # Don't handle name introductions - let memory system handle them
+        if "my name is" in user_input.lower():
+            return False
+            
         conversation_indicators = [
             'tell me', 'what is', 'how are', 'who are', 'explain', 'describe',
             'hello', 'hi', 'hey', 'thanks', 'thank you', 'good job',
-            'what can you', 'do you know', 'can you help', 'i need help'
+            'what can you', 'do you know', 'can you help', 'i need help',
+            'do you remember', 'what do you know about me'
         ]
         
         user_input_lower = user_input.lower()
         return any(indicator in user_input_lower for indicator in conversation_indicators)
+    
+    def get_capabilities_response(self):
+        """Get dynamic capabilities response"""
+        if self.feature_discovery:
+            summary = self.feature_discovery.get_capability_summary()
+            return f"I'm JARVIS with comprehensive capabilities: {summary}"
+        else:
+            return "I'm JARVIS, your advanced AI assistant with system control, web development, memory, and automation capabilities."
+    
+    def check_memory_for_response(self, user_input):
+        """Check memory system for relevant information"""
+        if not self.memory_system:
+            return None
+            
+        user_input_lower = user_input.lower()
+        
+        # Check for name-related queries
+        if "my name" in user_input_lower or "do you remember my name" in user_input_lower:
+            name = self.memory_system.recall_knowledge("user_info", "name")
+            if name:
+                return f"Yes, I remember your name is {name}."
+            else:
+                return "I don't have your name stored in my memory yet. You can tell me your name and I'll remember it."
+        
+        # Check for general memory queries
+        if "do you remember" in user_input_lower:
+            # Extract what they're asking about
+            parts = user_input_lower.split("do you remember")
+            if len(parts) > 1:
+                query = parts[1].strip()
+                # Search interactions for relevant information
+                results = self.memory_system.search_interactions(query, limit=3)
+                if results:
+                    return f"Yes, I remember we discussed {query}. I found {len(results)} related interactions in my memory."
+                else:
+                    return f"I don't have any specific memories about {query} in my records."
+        
+        # Check for stored knowledge
+        if "what do you know about me" in user_input_lower:
+            user_info = self.memory_system.recall_knowledge("user_info")
+            if user_info:
+                info_list = [f"{key}: {value}" for key, value in user_info.items()]
+                return f"Here's what I know about you: {', '.join(info_list)}"
+            else:
+                return "I don't have any personal information stored about you yet. Feel free to share details you'd like me to remember."
+        
+        return None

@@ -9,6 +9,8 @@ from modules.memory_system import MemorySystem
 from modules.context_manager import ContextManager
 from modules.learning_system import LearningSystem
 from modules.task_scheduler import TaskScheduler
+from modules.feature_discovery import FeatureDiscovery
+from modules.intent_classifier import IntentClassifier
 import os
 import json
 import time
@@ -45,6 +47,16 @@ class JARVIS:
         
         # Start scheduler
         self.task_scheduler.start_scheduler()
+        
+        # Initialize feature discovery for self-awareness
+        self.feature_discovery = FeatureDiscovery(self)
+        
+        # Initialize intent classifier for smart command/question detection
+        self.intent_classifier = IntentClassifier(self.ai)
+        
+        # Update conversational AI with feature awareness and memory
+        self.conversation_ai.feature_discovery = self.feature_discovery
+        self.conversation_ai.memory_system = self.memory
         
         self.wake_word_mode = False
         self.vision_active = False
@@ -225,8 +237,24 @@ class JARVIS:
             parts = user_input.split("that", 1)
             if len(parts) > 1:
                 info = parts[1].strip()
-                self.memory.store_knowledge("user_info", "custom", info)
-                self.ai.speak(f"I'll remember that {info}")
+                
+                # Check if it's a name
+                if "my name is" in info.lower():
+                    name = info.lower().replace("my name is", "").strip()
+                    self.memory.store_knowledge("user_info", "name", name)
+                    self.ai.speak(f"I'll remember that your name is {name}")
+                else:
+                    self.memory.store_knowledge("user_info", "custom", info)
+                    self.ai.speak(f"I'll remember that {info}")
+                return True
+        
+        elif "my name is" in user_input.lower():
+            # Direct name introduction
+            parts = user_input.lower().split("my name is", 1)
+            if len(parts) > 1:
+                name = parts[1].strip().title()  # Capitalize properly
+                self.memory.store_knowledge("user_info", "name", name)
+                self.ai.speak(f"Nice to meet you, {name}! I'll remember your name.")
                 return True
         
         elif "what do you remember" in user_input or "what have you learned" in user_input:
@@ -269,71 +297,147 @@ class JARVIS:
         
         return False
     
+    def handle_special_commands(self, command):
+        """Handle special /commands"""
+        cmd = command.lower().strip()
+        
+        if cmd == '/features':
+            feature_tree = self.feature_discovery.get_feature_tree()
+            print(feature_tree)
+            self.ai.speak("Here are all my capabilities. Check the display for the complete list.")
+            return None
+        
+        elif cmd == '/status':
+            status = self.feature_discovery.get_feature_status()
+            print("\n🔧 JARVIS System Status:")
+            print("=" * 30)
+            for component, state in status.items():
+                print(f"{component}: {state}")
+            self.ai.speak("System status displayed. All major components are active.")
+            return None
+        
+        elif cmd == '/capabilities':
+            summary = self.feature_discovery.get_capability_summary()
+            print(summary)
+            self.ai.speak("Here's a summary of my capabilities")
+            return None
+        
+        elif cmd == '/help':
+            help_text = """
+🤖 JARVIS Special Commands:
+/features    - Show all capabilities in tree format
+/status      - Show system component status  
+/capabilities - Show capability summary
+/help        - Show this help message
+
+Voice Commands Examples:
+• "Create a website for my restaurant"
+• "Remember that I like coffee"
+• "Switch context to work"
+• "What do you remember?"
+• "Take a screenshot"
+• "Open Chrome browser"
+"""
+            print(help_text)
+            self.ai.speak("Help information displayed. I can help with web development, memory, system control, and much more.")
+            return None
+        
+        else:
+            print(f"Unknown command: {command}")
+            print("Available commands: /features, /status, /capabilities, /help")
+            return None
+    
     def process_input(self, user_input):
-        """Main input processing pipeline with JARVIS intelligence"""
+        """Main input processing pipeline with intelligent intent classification"""
         print(f"\n🔍 JARVIS Processing: '{user_input}'")
         
-        # TIER 0: Check for conversational input first
-        if self.conversation_ai.is_conversational_input(user_input):
+        # Handle special commands first
+        if user_input.startswith('/'):
+            return self.handle_special_commands(user_input)
+        
+        # TIER 0: Classify user intent
+        intent = self.intent_classifier.classify_intent(user_input)
+        print(f"🎯 Intent detected: {intent}")
+        
+        # Handle based on intent
+        if intent == 'conversation':
+            # Pure conversational input
             success, response = self.conversation_ai.handle_conversation(user_input)
             if success:
                 self.ai.speak(response)
                 print(f"💬 {response}")
                 return None
         
-        # TIER 1: Enhanced command processing (modular system)
-        result = self.command_processor.process_command(user_input)
-        if result is not None:
-            success, message = result
+        elif intent == 'question':
+            # User is asking a question - prioritize conversational response
+            success, response = self.conversation_ai.handle_conversation(user_input)
             if success:
-                self.ai.speak(message)
-                print(f"✅ {message}")
+                self.ai.speak(response)
+                print(f"❓ {response}")
+                return None
             else:
-                self.ai.speak(f"Error: {message}")
-                print(f"❌ {message}")
-            return None
+                # Fallback to AI for complex questions
+                print("🤖 JARVIS thinking about your question...")
+                self.ai.speak("Let me think about that question")
+                advanced_response = self.ai.process_advanced_request(user_input, self.current_dir)
+                if advanced_response:
+                    self.ai.speak("Here's what I found")
+                    print(f"🎯 {advanced_response}")
+                    return None
         
-        # Handle special JARVIS requests
-        if self.handle_web_project_request(user_input):
-            return None
-        
-        if self.handle_vision_commands(user_input):
-            return None
-        
-        if self.handle_memory_commands(user_input):
-            return None
-        
-        if self.handle_application_launch(user_input):
-            return None
+        elif intent == 'command':
+            # User wants to execute a command - prioritize action
+            print("⚙️ Processing as command...")
             
-        if self.handle_system_info_request(user_input):
-            return None
+            # TIER 1: Enhanced command processing (modular system)
+            result = self.command_processor.process_command(user_input)
+            if result is not None:
+                success, message = result
+                if success:
+                    self.ai.speak(message)
+                    print(f"✅ {message}")
+                else:
+                    self.ai.speak(f"Error: {message}")
+                    print(f"❌ {message}")
+                return None
+            
+            # Handle special JARVIS requests
+            if self.handle_memory_commands(user_input):
+                return None
+            
+            if self.handle_web_project_request(user_input):
+                return None
+            
+            if self.handle_vision_commands(user_input):
+                return None
+            
+            if self.handle_application_launch(user_input):
+                return None
+                
+            if self.handle_system_info_request(user_input):
+                return None
+            
+            # TIER 2: Pattern matching (fast)
+            command = self.match_pattern(user_input)
+            if command:
+                print(f"⚡ Fast match: {command}")
+                self.ai.speak("Executing command")
+                return command
+            
+            # TIER 3: AI generation (slower)
+            print("🤖 JARVIS generating command...")
+            self.ai.speak("Let me generate that command")
+            
+            command = self.ai.generate_command(user_input, self.current_dir)
+            if command:
+                print(f"🧠 JARVIS generated: {command}")
+                return command
+            
+            # TIER 4: Assume it's a direct command
+            print("📝 Treating as direct command")
+            return user_input
         
-        # TIER 2: Pattern matching (fast)
-        command = self.match_pattern(user_input)
-        if command:
-            print(f"⚡ Fast match: {command}")
-            self.ai.speak("Executing command")
-            return command
-        
-        # TIER 3: AI generation (slower)
-        print("🤖 JARVIS thinking...")
-        self.ai.speak("Let me think about that")
-        
-        command = self.ai.generate_command(user_input, self.current_dir)
-        if command:
-            print(f"🧠 JARVIS generated: {command}")
-            return command
-        
-        # TIER 4: Advanced AI processing
-        advanced_response = self.ai.process_advanced_request(user_input, self.current_dir)
-        if advanced_response:
-            self.ai.speak("I understand. Let me handle that for you.")
-            print(f"🎯 Advanced processing: {advanced_response}")
-            return None
-        
-        # TIER 5: Assume it's a direct command
-        print("📝 Treating as direct command")
+        # Fallback for unclassified input
         return user_input
     
     def run(self):
