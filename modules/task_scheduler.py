@@ -11,7 +11,7 @@ class TaskScheduler:
         self.tasks = {}
         self.running = False
         self.scheduler_thread = None
-        self.tasks_file = Path.cwd() / "playground" / "Memory" / "scheduled_tasks.json"
+        self.tasks_file = Path.cwd() / "Memory" / "scheduled_tasks.json"
         
         # Load existing tasks
         self.load_tasks()

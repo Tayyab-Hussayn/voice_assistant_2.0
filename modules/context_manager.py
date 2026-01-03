@@ -7,7 +7,7 @@ class ContextManager:
         self.memory = memory_system
         self.contexts = {}
         self.active_context = "general"
-        self.context_dir = Path.cwd() / "playground" / "Contexts"
+        self.context_dir = Path.cwd() / "Contexts"
         self.context_dir.mkdir(parents=True, exist_ok=True)
         
         # Load existing contexts

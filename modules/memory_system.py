@@ -6,7 +6,7 @@ import hashlib
 
 class MemorySystem:
     def __init__(self):
-        self.memory_dir = Path.cwd() / "playground" / "Memory"
+        self.memory_dir = Path.cwd() / "Memory"
         self.memory_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize SQLite database for structured memory

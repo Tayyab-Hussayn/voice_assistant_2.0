@@ -1,0 +1,18 @@
+{
+  "general": {
+    "name": "General",
+    "description": "Default context for general tasks",
+    "created": "2026-01-03T12:47:33.591333",
+    "variables": {},
+    "history": [],
+    "last_accessed": "2026-01-03T12:47:34.535685"
+  },
+  "work": {
+    "name": "work",
+    "description": "",
+    "created": "2026-01-03T12:47:34.285999",
+    "variables": {},
+    "history": [],
+    "last_accessed": "2026-01-03T12:47:34.535707"
+  }
+}

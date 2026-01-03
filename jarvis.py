@@ -218,6 +218,57 @@ class JARVIS:
         
         return False
     
+    def handle_memory_commands(self, user_input):
+        """Handle memory and context commands"""
+        if "remember" in user_input and "that" in user_input:
+            # Extract what to remember
+            parts = user_input.split("that", 1)
+            if len(parts) > 1:
+                info = parts[1].strip()
+                self.memory.store_knowledge("user_info", "custom", info)
+                self.ai.speak(f"I'll remember that {info}")
+                return True
+        
+        elif "what do you remember" in user_input or "what have you learned" in user_input:
+            summary = self.learning_system.get_learning_summary()
+            self.ai.speak("Here's what I've learned from our interactions")
+            print(summary)
+            return True
+        
+        elif "switch context" in user_input or "change context" in user_input:
+            words = user_input.split()
+            if "to" in words:
+                context_name = " ".join(words[words.index("to") + 1:])
+                context_id = context_name.lower().replace(' ', '_')
+                if self.context_manager.switch_context(context_id):
+                    self.ai.speak(f"Switched to {context_name} context")
+                else:
+                    self.ai.speak(f"Context {context_name} not found. Creating new context.")
+                    self.context_manager.create_context(context_name)
+                    self.context_manager.switch_context(context_id)
+                    self.ai.speak(f"Created and switched to {context_name} context")
+                return True
+        
+        elif "create context" in user_input:
+            words = user_input.split()
+            if "called" in words:
+                context_name = " ".join(words[words.index("called") + 1:])
+                context_id = self.context_manager.create_context(context_name)
+                self.ai.speak(f"Created context {context_name}")
+                return True
+        
+        elif "current context" in user_input or "context status" in user_input:
+            summary = self.context_manager.get_context_summary()
+            self.ai.speak("Here's your current context information")
+            print(summary)
+            return True
+        
+        elif "schedule" in user_input and ("task" in user_input or "reminder" in user_input):
+            self.ai.speak("Task scheduling is available. You can schedule daily, weekly, or one-time tasks.")
+            return True
+        
+        return False
+    
     def process_input(self, user_input):
         """Main input processing pipeline with JARVIS intelligence"""
         print(f"\n🔍 JARVIS Processing: '{user_input}'")
@@ -247,6 +298,9 @@ class JARVIS:
             return None
         
         if self.handle_vision_commands(user_input):
+            return None
+        
+        if self.handle_memory_commands(user_input):
             return None
         
         if self.handle_application_launch(user_input):
@@ -305,6 +359,14 @@ class JARVIS:
                 if mode.lower() == 'exit':
                     self.ai.speak("Goodbye! JARVIS signing off.")
                     print("👋 JARVIS offline")
+                    
+                    # End session and cleanup
+                    session_summary = self.memory.end_session()
+                    self.task_scheduler.stop_scheduler()
+                    
+                    if session_summary:
+                        print(f"📊 Session Summary: {session_summary['total_interactions']} interactions, {session_summary['success_rate']:.1f}% success rate")
+                    
                     break
                 
                 if mode.lower() == 'wake':
@@ -323,9 +385,13 @@ class JARVIS:
                 continue
                 
             # Process
+            # Process input and learn from interaction
             command = self.process_input(user_input)
             
             if not command:
+                # Still learn from non-command interactions
+                self.memory.remember_interaction(user_input, "Handled by specialized system", "system", True)
+                self.learning_system.learn_from_interaction(user_input, "System handled", "system", True)
                 continue
             
             # Safety check
@@ -336,11 +402,17 @@ class JARVIS:
                 if confirm.lower() != 'yes':
                     self.ai.speak("Command cancelled for safety.")
                     print("❌ Cancelled")
+                    self.memory.remember_interaction(user_input, "Command cancelled for safety", "safety", False)
                     continue
             
             # Execute
             print(f"⚙️  Executing: {command}")
             result = self.system.execute_command(command)
+            
+            # Remember the interaction
+            response = "Command executed successfully" if result['success'] else f"Command failed: {result.get('error', 'Unknown error')}"
+            self.memory.remember_interaction(user_input, response, "command", result['success'])
+            self.learning_system.learn_from_interaction(user_input, response, "command", result['success'])
         
             print("\n" + "-"*60)
             if result['success']:
