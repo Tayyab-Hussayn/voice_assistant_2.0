@@ -1,13 +1,24 @@
 import cv2
 import numpy as np
-import mediapipe as mp
 import subprocess
 import time
 from threading import Thread
-import pyautogui
+
+# Try to import GUI-dependent modules
+try:
+    import pyautogui
+    import mediapipe as mp
+    GUI_AVAILABLE = True
+except Exception as e:
+    print(f"GUI modules not available: {e}")
+    GUI_AVAILABLE = False
 
 class ComputerVision:
     def __init__(self):
+        if not GUI_AVAILABLE:
+            print("⚠️ Computer vision running in limited mode - no GUI access")
+            return
+            
         # Initialize MediaPipe
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
@@ -25,7 +36,10 @@ class ComputerVision:
         self.gesture_cooldown = 0
         
         # Screen capture
-        self.screen_width, self.screen_height = pyautogui.size()
+        try:
+            self.screen_width, self.screen_height = pyautogui.size()
+        except:
+            self.screen_width, self.screen_height = 1920, 1080  # Default
         
         # Camera
         self.camera = None
@@ -33,6 +47,9 @@ class ComputerVision:
         
     def start_camera(self):
         """Start camera feed"""
+        if not GUI_AVAILABLE:
+            return False, "Camera not available - no GUI access"
+            
         try:
             self.camera = cv2.VideoCapture(0)
             if not self.camera.isOpened():
@@ -52,6 +69,9 @@ class ComputerVision:
     
     def take_screenshot(self, save_path=None):
         """Take a screenshot"""
+        if not GUI_AVAILABLE:
+            return False, "Screenshot not available - no GUI access"
+            
         try:
             screenshot = pyautogui.screenshot()
             if save_path:

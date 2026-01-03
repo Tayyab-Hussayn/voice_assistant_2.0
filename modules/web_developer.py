@@ -18,7 +18,6 @@ class WebDeveloper:
         self.frameworks = {
             'vanilla': self.create_vanilla_project,
             'react': self.create_react_project,
-            'vue': self.create_vue_project,
             'bootstrap': self.create_bootstrap_project
         }
     

@@ -1,0 +1,17 @@
+{
+  "name": "portfolio",
+  "version": "1.0.0",
+  "description": "Web project created by JARVIS AI Assistant",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "web",
+    "jarvis",
+    "ai-generated"
+  ],
+  "author": "JARVIS AI Assistant",
+  "license": "MIT"
+}

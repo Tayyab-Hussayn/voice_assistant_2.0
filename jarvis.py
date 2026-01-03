@@ -4,13 +4,20 @@ from modules.ai_handler import AIHandler
 from modules.system_controller import SystemController
 from modules.command_processor import CommandProcessor
 from modules.conversational_ai import ConversationalAI
-from modules.computer_vision import ComputerVision
 from modules.web_developer import WebDeveloper
 import os
 import json
 import time
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Try to import computer vision module (optional)
+try:
+    from modules.computer_vision import ComputerVision
+    VISION_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Computer vision not available: {e}")
+    VISION_AVAILABLE = False
 
 load_dotenv()
 
@@ -23,7 +30,7 @@ class JARVIS:
         self.system = SystemController()
         self.command_processor = CommandProcessor()
         self.conversation_ai = ConversationalAI(self.ai)  # New conversational AI
-        self.computer_vision = ComputerVision()  # New computer vision
+        self.computer_vision = ComputerVision() if VISION_AVAILABLE else None  # Optional computer vision
         self.web_developer = WebDeveloper()  # New web developer
         self.wake_word_mode = False
         self.vision_active = False
@@ -179,6 +186,10 @@ class JARVIS:
     
     def handle_vision_commands(self, user_input):
         """Handle computer vision and gesture control commands"""
+        if not VISION_AVAILABLE or not self.computer_vision:
+            self.ai.speak("Computer vision is not available in this environment")
+            return True
+            
         if "start vision" in user_input or "enable vision" in user_input or "gesture control" in user_input:
             self.ai.speak("Starting computer vision and gesture control")
             success, message = self.computer_vision.start_gesture_control()
