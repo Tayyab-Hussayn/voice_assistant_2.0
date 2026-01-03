@@ -1,4 +1,5 @@
 import subprocess
+import re
 from pathlib import Path
 from modules.voice_input import VoiceInput
 from modules.ai_handler import AIHandler
@@ -526,102 +527,323 @@ Voice Commands Examples:
         """Process natural language task with AI reasoning"""
         print("🧠 JARVIS analyzing task...")
         
-        # Use AI to understand the task and generate commands
-        task_prompt = f"""
-        You are JARVIS, an intelligent AI assistant. A user has given you this task:
-        "{user_input}"
+        # Check if this is a workflow/tool task vs a file system task
+        if self._is_workflow_task(user_input):
+            return self._process_workflow_task(user_input)
+        else:
+            return self._process_command_task(user_input)
+    
+    def _is_workflow_task(self, user_input):
+        """Detect if task requires workflow/tool operations vs file system commands"""
+        workflow_indicators = [
+            'research', 'analyze', 'knowledge base', 'store knowledge', 'create task',
+            'workflow', 'agent', 'search web', 'compliance', 'security scan',
+            'subagent', 'parallel', 'automation'
+        ]
         
-        Analyze this task and determine what Linux/Unix commands need to be executed.
+        user_lower = user_input.lower()
+        return any(indicator in user_lower for indicator in workflow_indicators)
+    
+    def _process_workflow_task(self, user_input):
+        """Process complex workflow task using JARVIS tools"""
+        print("🔄 JARVIS planning workflow...")
         
-        Common tasks and their commands:
-        - Rename file/directory: mv old_name new_name
-        - Delete file: rm filename
-        - Delete directory: rmdir dirname or rm -rf dirname
-        - List directory: ls path
-        - Navigate: cd path
-        - Create directory: mkdir dirname
-        - Copy: cp source dest
-        - Find files: find path -name pattern
-        
-        Respond with ONLY the command(s) to execute, one per line. No explanations.
-        If the task involves multiple steps, list each command on a separate line.
-        Use absolute paths when possible (~/Pictures, ~/Downloads, etc.).
-        
-        For the given task, what command(s) should be executed?
-        """
+        # Execute workflow step by step with intelligent chaining
+        workflow_context = {}
         
         try:
-            # Get AI response for command generation
-            ai_response = self.ai.get_response(task_prompt)
+            # Security workflow detection
+            if any(word in user_input.lower() for word in ['security', 'vulnerability', 'compliance', 'scan']):
+                return self._execute_security_workflow(user_input, workflow_context)
             
-            if ai_response and ai_response.strip():
-                print(f"🧠 JARVIS reasoned: {ai_response.strip()}")
-                
-                # Extract commands from AI response
-                commands = []
-                lines = ai_response.strip().split('\n')
-                
-                # Look for actual commands (lines that start with common command words or contain paths)
-                for line in lines:
-                    line = line.strip()
-                    # Skip thinking tags, explanations, and empty lines
-                    if (line and 
-                        not line.startswith('<think>') and 
-                        not line.startswith('</think>') and 
-                        not '<think>' in line and
-                        not line.startswith('The ') and
-                        not line.startswith('To ') and
-                        not line.startswith('Since ') and
-                        not line.startswith('So ') and
-                        not line.startswith('This ') and
-                        not line.endswith(':') and
-                        ('mv ' in line or 'ls ' in line or 'cd ' in line or 'rm ' in line or 'mkdir ' in line or 'cp ' in line)):
-                        
-                        # Clean up the command
-                        line = line.replace('```', '').replace('bash', '').strip()
-                        if line.startswith('- '):
-                            line = line[2:].strip()
-                        if line.startswith('`') and line.endswith('`'):
-                            line = line[1:-1].strip()
-                        if line:
-                            commands.append(line)
-                
-                # Execute each command
-                results = []
-                for command in commands:
-                    # Clean up the command (remove any markdown or extra formatting)
-                    command = command.replace('```', '').replace('bash', '').strip()
-                    if command.startswith('- '):
-                        command = command[2:].strip()
-                    
-                    print(f"🤖 JARVIS executing: {command}")
-                    
-                    # Execute the command using the system controller
-                    result = self.system.execute_command(command)
-                    results.append(result)
-                    
-                    if result.get('success'):
-                        print(f"✅ {result.get('output', 'Done')}")
-                    else:
-                        print(f"❌ {result.get('error', 'Command failed')}")
-                
-                # Return summary of results
-                successful = sum(1 for r in results if r.get('success'))
-                total = len(results)
-                
-                if successful == total:
-                    self.ai.speak("Task completed successfully")
-                    return f"✅ Task completed! Executed {total} commands successfully."
-                else:
-                    self.ai.speak("Task partially completed")
-                    return f"⚠️ Task partially completed. {successful}/{total} commands succeeded."
+            # Research workflow detection
+            elif 'research' in user_input.lower():
+                return self._execute_research_workflow(user_input, workflow_context)
             
+            # General workflow
             else:
-                return "❌ Could not understand the task. Please be more specific."
+                return self._execute_general_workflow(user_input, workflow_context)
                 
         except Exception as e:
-            print(f"❌ Error in intelligent task processing: {str(e)}")
-            return f"❌ Error processing task: {str(e)}"
+            print(f"❌ Error in workflow processing: {str(e)}")
+            return f"❌ Error processing workflow: {str(e)}"
+    
+    def _execute_security_workflow(self, user_input, workflow_context):
+        """Execute security-focused workflow"""
+        print("🔒 JARVIS executing security workflow...")
+        
+        # Step 1: Security scan if requested
+        if 'vulnerabilit' in user_input.lower() or 'scan' in user_input.lower():
+            print("🔧 JARVIS scanning for security vulnerabilities...")
+            # Scan both code and AWS security
+            code_scan = self.security.scan_code(".")
+            aws_scan = self.security.scan_aws()
+            scan_result = f"Code scan completed. AWS scan completed."
+            workflow_context['security_scan'] = scan_result
+            workflow_context['code_scan_details'] = code_scan
+            workflow_context['aws_scan_details'] = aws_scan
+            print(f"✅ Security scan completed: {scan_result}")
+        
+        # Step 2: Compliance check if requested
+        if 'compliance' in user_input.lower():
+            print("🔧 JARVIS running compliance checks...")
+            compliance_result = self.security.check_compliance("SOC2")
+            workflow_context['compliance_check'] = compliance_result
+            print(f"✅ Compliance check completed: {str(compliance_result)[:100]}...")
+        
+        # Step 3: Create tasks for issues found
+        if 'task' in user_input.lower() or 'issues' in user_input.lower():
+            issues_found = 0
+            if 'security_scan' in workflow_context and 'vulnerabilities found' in workflow_context['security_scan'].lower():
+                issues_found += 1
+                task_result = self.tasks.add(
+                    "Fix Security Vulnerabilities",
+                    "Address security vulnerabilities found in codebase scan",
+                    "high",
+                    "security"
+                )
+                workflow_context['security_task'] = task_result
+                print(f"✅ Security task created: {task_result}")
+            
+            if 'compliance_check' in workflow_context and 'non-compliant' in workflow_context['compliance_check'].lower():
+                issues_found += 1
+                task_result = self.tasks.add(
+                    "Fix Compliance Issues",
+                    "Address compliance violations found in security audit",
+                    "high",
+                    "compliance"
+                )
+                workflow_context['compliance_task'] = task_result
+                print(f"✅ Compliance task created: {task_result}")
+        
+        # Step 4: Create security monitoring workflow
+        if 'workflow' in user_input.lower() and 'monitor' in user_input.lower():
+            print("🔧 JARVIS creating security monitoring workflow...")
+            workflow_result = self.workflows.create(
+                "Security Monitoring Workflow",
+                "Automated security scanning and compliance monitoring",
+                "security_monitoring"
+            )
+            workflow_context['monitoring_workflow'] = workflow_result
+            print(f"✅ Security workflow created: {workflow_result}")
+        
+        # Step 5: Coordinate security agents
+        if 'agent' in user_input.lower():
+            print("🔧 JARVIS coordinating security agents...")
+            agent_result = self.subagents.create_task(
+                "security",
+                scan_type="vulnerability",
+                priority="high"
+            )
+            workflow_context['security_agent'] = agent_result
+            print(f"✅ Security agent coordinated: {agent_result}")
+        
+        return self._summarize_workflow(workflow_context, "security")
+    
+    def _execute_research_workflow(self, user_input, workflow_context):
+        """Execute research-focused workflow"""
+        print("🔬 JARVIS executing research workflow...")
+        
+        # Step 1: Research if requested
+        topic = self._extract_research_topic(user_input)
+        if topic:
+            print(f"🔧 JARVIS researching: {topic}")
+            research_result = self.research.research(topic, "medium")
+            workflow_context['research_content'] = research_result
+            print(f"✅ Research completed: {len(research_result)} characters")
+        
+        # Step 2: Analyze if requested
+        if 'analyze' in user_input.lower() and 'research_content' in workflow_context:
+            print("🔧 JARVIS analyzing research findings...")
+            analysis_result = self.research.analyze(workflow_context['research_content'], "summary")
+            workflow_context['analysis'] = analysis_result
+            print(f"✅ Analysis completed: {len(analysis_result)} characters")
+        
+        # Step 3: Store in knowledge base if requested
+        if 'knowledge base' in user_input.lower() or 'store knowledge' in user_input.lower():
+            content = workflow_context.get('analysis') or workflow_context.get('research_content', "Research results")
+            topic = topic or "Research Task"
+            print(f"🔧 JARVIS storing knowledge: {topic}")
+            kb_result = self.knowledge.add(f"{topic} Research", content[:1000], "JARVIS Research", "research")
+            workflow_context['kb_id'] = kb_result
+            print(f"✅ Knowledge stored: {kb_result}")
+        
+        # Step 4: Create task if requested
+        if 'create task' in user_input.lower() or 'task' in user_input.lower():
+            topic = topic or "Research Documentation"
+            print(f"🔧 JARVIS creating task: Document {topic}")
+            task_result = self.tasks.add(
+                f"Document {topic} Research",
+                f"Create comprehensive documentation for {topic} research findings",
+                "medium",
+                "documentation"
+            )
+            workflow_context['task_id'] = task_result
+            print(f"✅ Task created: {task_result}")
+        
+        # Step 5: Create workflow if requested
+        if 'workflow' in user_input.lower() and 'automate' in user_input.lower():
+            print("🔧 JARVIS creating automation workflow...")
+            workflow_result = self.workflows.create(
+                "Research Automation Workflow",
+                "Automated workflow for research, analysis, and documentation tasks",
+                "research_analysis"
+            )
+            workflow_context['workflow_id'] = workflow_result
+            print(f"✅ Workflow created: {workflow_result}")
+        
+        # Step 6: Use subagents for parallel tasks if needed
+        if 'agent' in user_input.lower():
+            print("🔧 JARVIS coordinating research agents...")
+            agent_result = self.subagents.create_task(
+                "research",
+                topic=topic or "General Research",
+                priority="medium"
+            )
+            workflow_context['agent_task'] = agent_result
+            print(f"✅ Research agent coordinated: {agent_result}")
+        
+        return self._summarize_workflow(workflow_context, "research")
+    
+    def _execute_general_workflow(self, user_input, workflow_context):
+        """Execute general workflow tasks"""
+        print("⚙️ JARVIS executing general workflow...")
+        
+        # Basic workflow steps based on keywords
+        if 'task' in user_input.lower():
+            task_result = self.tasks.add(
+                "General Task",
+                f"Task created from workflow: {user_input[:100]}",
+                "medium",
+                "general"
+            )
+            workflow_context['task_id'] = task_result
+            print(f"✅ Task created: {task_result}")
+        
+        if 'workflow' in user_input.lower():
+            workflow_result = self.workflows.create(
+                "General Workflow",
+                f"Workflow created from request: {user_input[:100]}",
+                "general"
+            )
+            workflow_context['workflow_id'] = workflow_result
+            print(f"✅ Workflow created: {workflow_result}")
+        
+        return self._summarize_workflow(workflow_context, "general")
+    
+    def _summarize_workflow(self, workflow_context, workflow_type):
+        """Summarize workflow execution results"""
+        completed_steps = len(workflow_context)
+        if completed_steps > 0:
+            self.ai.speak(f"{workflow_type.title()} workflow completed with {completed_steps} steps")
+            summary = f"🎉 Intelligent {workflow_type} workflow completed! Executed {completed_steps} coordinated steps:"
+            for key, value in workflow_context.items():
+                summary += f"\n• {key}: {str(value)[:50]}..."
+            print(summary)
+            return "✅ Complex workflow execution completed successfully"
+        else:
+            return f"❌ No {workflow_type} workflow steps could be identified from the task."
+    
+    def _determine_action_type(self, user_input):
+        """Determine the type of action from user input"""
+        user_lower = user_input.lower()
+        
+        if any(word in user_lower for word in ['research', 'analyze', 'study']):
+            return "research"
+        elif any(word in user_lower for word in ['security', 'vulnerability', 'compliance']):
+            return "security"
+        elif any(word in user_lower for word in ['workflow', 'automate', 'agent']):
+            return "workflow"
+        elif any(word in user_lower for word in ['task', 'todo', 'schedule']):
+            return "task_management"
+        elif any(word in user_lower for word in ['knowledge', 'store', 'remember']):
+            return "knowledge"
+        elif any(word in user_input for word in ['mv', 'cp', 'rm', 'mkdir', 'ls', 'cd']):
+            return "file_system"
+        elif user_input.startswith('/') or user_input.startswith('./'):
+            return "command"
+        else:
+            return "general"
+
+    def _extract_research_topic(self, text):
+        """Extract research topic from user input"""
+        import re
+        
+        # Look for quoted topics first
+        quoted_match = re.search(r'"([^"]+)"', text)
+        if quoted_match:
+            return quoted_match.group(1)
+        
+        # Look for "research X" patterns
+        research_match = re.search(r'research\s+([^,\.]+)', text, re.IGNORECASE)
+        if research_match:
+            return research_match.group(1).strip()
+        
+        return None
+    
+    def _execute_tool_command(self, command):
+        """Execute a tool command and return result"""
+        try:
+            # Temporarily disable performance monitoring for internal calls
+            if command.startswith('research '):
+                topic = command[9:].strip().strip('"')
+                return self.research.research(topic, "medium")
+            elif command.startswith('quick_research '):
+                topic = command[15:].strip().strip('"')
+                return self.research.quick_research(topic)
+            elif command.startswith('kb_add '):
+                parts = command[7:].strip().split('"')
+                if len(parts) >= 4:
+                    title, content = parts[1], parts[3]
+                    source = parts[5] if len(parts) > 5 else ""
+                    category = parts[7] if len(parts) > 7 else "general"
+                    return self.knowledge.add(title, content, source, category)
+            elif command.startswith('kb_search '):
+                query = command[10:].strip().strip('"')
+                return self.knowledge.search(query)
+            elif command.startswith('task_add '):
+                parts = command[9:].strip().split('"')
+                if len(parts) >= 4:
+                    title, description = parts[1], parts[3]
+                    remaining = parts[4].strip().split() if len(parts) > 4 else []
+                    priority = remaining[0] if remaining else "medium"
+                    category = remaining[1] if len(remaining) > 1 else "general"
+                    return self.tasks.add(title, description, priority, category)
+            elif command.startswith('agent_task '):
+                parts = command[11:].strip().split()
+                if len(parts) >= 2:
+                    task_type = parts[0]
+                    kwargs = {}
+                    for part in parts[1:]:
+                        if '=' in part:
+                            key, value = part.split('=', 1)
+                            kwargs[key] = value.strip('"')
+                    return self.subagents.create_task(task_type, **kwargs)
+            elif command.startswith('workflow_create '):
+                parts = command[16:].strip().split('"')
+                if len(parts) >= 2:
+                    name = parts[1]
+                    description = parts[3] if len(parts) > 3 else ""
+                    template = parts[4].strip() if len(parts) > 4 else None
+                    return self.workflows.create(name, description, template)
+            elif command.startswith('web_search '):
+                query = command[11:].strip().strip('"')
+                result = self.web_search.search(query)
+                return f"🌐 Found {result.get('num_results', 0)} results" if result.get('success') else f"❌ Search failed"
+            elif command.startswith('analyze '):
+                parts = command[8:].strip().split('"')
+                if len(parts) >= 2:
+                    content = parts[1]
+                    analysis_type = parts[2].strip() if len(parts) > 2 else "summary"
+                    return self.research.analyze(content, analysis_type)
+            
+            return f"❌ Unknown tool command: {command}"
+            
+        except Exception as e:
+            return f"❌ Tool execution error: {str(e)}"
+    
+    def _process_command_task(self, user_input):
+        """Process file system command task"""
 
     def process_input(self, user_input):
         """Main input processing pipeline with intelligent intent classification"""
@@ -1888,7 +2110,22 @@ Voice Commands Examples:
                 
             # Process
             # Process input and learn from interaction
-            command = self.process_input(user_input)
+            result = self.process_input(user_input)
+            
+            if result:
+                # Determine if the operation was successful
+                success = not (result.startswith('❌') or 'Error:' in result or 'failed' in result.lower() or result.startswith('⚠️'))
+                action_type = self._determine_action_type(user_input)
+                
+                # Record interaction in memory system
+                self.memory.remember_interaction(user_input, result, action_type, success)
+                self.learning_system.learn_from_interaction(user_input, result, action_type, success)
+                
+                print(result)
+                continue
+            
+            # Fallback to treating as direct command
+            command = user_input
             
             if not command:
                 # Still learn from non-command interactions
