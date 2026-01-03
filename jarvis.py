@@ -1,10 +1,15 @@
 import subprocess
+from pathlib import Path
 from modules.voice_input import VoiceInput
 from modules.ai_handler import AIHandler
 from modules.system_controller import SystemController
 from modules.command_processor import CommandProcessor
 from modules.conversational_ai import ConversationalAI
 from modules.intelligent_web_builder import IntelligentWebBuilder
+from modules.file_system_manager import FileSystemManager
+from modules.search_system import SearchSystem
+from modules.pattern_matcher import PatternMatcher
+from modules.lsp_manager import CodeIntelligence
 from modules.memory_system import MemorySystem
 from modules.context_manager import ContextManager
 from modules.learning_system import LearningSystem
@@ -42,6 +47,10 @@ class JARVIS:
         self.conversation_ai = ConversationalAI(self.ai)  # Conversational AI
         self.computer_vision = ComputerVision() if VISION_AVAILABLE else None  # Optional computer vision
         self.web_developer = IntelligentWebBuilder(self.ai)  # Intelligent web builder
+        self.file_manager = FileSystemManager()  # Enhanced file system manager (Tool 1)
+        self.search_system = SearchSystem()  # Advanced search system (Tool 2)
+        self.pattern_matcher = PatternMatcher()  # Pattern matching system (Tool 3)
+        self.code_intelligence = CodeIntelligence()  # LSP integration foundation (Tool 4)
         
         # Phase 4: Intelligence & Memory System
         self.memory = MemorySystem()  # Long-term memory
@@ -496,6 +505,457 @@ Voice Commands Examples:
                 result = self.handle_special_commands(user_input)
                 self.performance_monitor.end_operation(operation_data, success=True)
                 return result
+            
+            # Enhanced file system operations (Tool 1)
+            elif user_input.startswith('fs_write '):
+                # Parse fs_write command: fs_write create /path/to/file "content"
+                parts = user_input.split(' ', 2)
+                if len(parts) >= 3:
+                    command = parts[1]
+                    remaining = parts[2]
+                    
+                    if command == "create":
+                        # Parse: create /path/to/file "content"
+                        if '"' in remaining:
+                            path_part, content_part = remaining.split('"', 1)
+                            path = path_part.strip()
+                            content = content_part.rstrip('"')
+                            result = self.file_manager.fs_write("create", path, file_text=content)
+                            if result["success"]:
+                                self.ai.speak(f"Created file {Path(path).name}")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"✅ {result['summary']}"
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=False)
+                                return f"❌ {result['error']}"
+                    elif command == "append":
+                        # Parse: append /path/to/file "content"
+                        if '"' in remaining:
+                            path_part, content_part = remaining.split('"', 1)
+                            path = path_part.strip()
+                            content = content_part.rstrip('"')
+                            result = self.file_manager.fs_write("append", path, new_str=content)
+                            if result["success"]:
+                                self.ai.speak(f"Appended to file {Path(path).name}")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"✅ {result['summary']}"
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=False)
+                                return f"❌ {result['error']}"
+                
+                self.performance_monitor.end_operation(operation_data, success=False)
+                return "❌ Invalid fs_write command format"
+            
+            elif user_input.startswith('glob '):
+                # Parse glob command: glob "*.py" or glob "**/*.js" --limit=50
+                parts = user_input[5:].strip()
+                
+                if parts.startswith('"'):
+                    end_quote = parts.find('"', 1)
+                    if end_quote != -1:
+                        pattern = parts[1:end_quote]
+                        remaining = parts[end_quote+1:].strip()
+                        
+                        # Parse options
+                        kwargs = {}
+                        if '--limit=' in remaining:
+                            try:
+                                limit_start = remaining.find('--limit=') + 8
+                                limit_end = remaining.find(' ', limit_start)
+                                if limit_end == -1:
+                                    limit_end = len(remaining)
+                                kwargs['limit'] = int(remaining[limit_start:limit_end])
+                            except ValueError:
+                                pass
+                        
+                        if '--max-depth=' in remaining:
+                            try:
+                                depth_start = remaining.find('--max-depth=') + 12
+                                depth_end = remaining.find(' ', depth_start)
+                                if depth_end == -1:
+                                    depth_end = len(remaining)
+                                kwargs['max_depth'] = int(remaining[depth_start:depth_end])
+                            except ValueError:
+                                pass
+                        
+                        # Use enhanced pattern matcher
+                        result = self.pattern_matcher.glob(pattern, **kwargs)
+                        
+                        if result["success"]:
+                            files = result["filePaths"]
+                            if files:
+                                file_list = "\n".join(f"• {file}" for file in files[:10])
+                                if result["truncated"]:
+                                    file_list += f"\n... and {result['totalFiles'] - 10} more files"
+                                self.ai.speak(f"Found {result['totalFiles']} files matching pattern")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"📁 Found {result['totalFiles']} files:\n{file_list}"
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"📁 No files found matching pattern: {pattern}"
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ {result['error']}"
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid glob command: missing closing quote"
+                else:
+                    # Try without quotes for simple patterns
+                    pattern = parts.split()[0] if parts else ""
+                    if pattern:
+                        result = self.pattern_matcher.glob(pattern)
+                        if result["success"]:
+                            files = result["filePaths"]
+                            if files:
+                                file_list = "\n".join(f"• {file}" for file in files[:10])
+                                if result["truncated"]:
+                                    file_list += f"\n... and {result['totalFiles'] - 10} more files"
+                                self.ai.speak(f"Found {result['totalFiles']} files matching pattern")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"📁 Found {result['totalFiles']} files:\n{file_list}"
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"📁 No files found matching pattern: {pattern}"
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ {result['error']}"
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid glob command: no pattern specified"
+            
+            elif user_input.startswith('find_files '):
+                # Find files only: find_files "*.py"
+                pattern = user_input[11:].strip().strip('"')
+                result = self.pattern_matcher.find_files(pattern)
+                
+                if result["success"]:
+                    files = result["filePaths"]
+                    if files:
+                        file_list = "\n".join(f"• {file}" for file in files[:10])
+                        if result["truncated"]:
+                            file_list += f"\n... and {result['totalFiles'] - 10} more files"
+                        self.ai.speak(f"Found {result['totalFiles']} files")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"📄 Found {result['totalFiles']} files:\n{file_list}"
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"📄 No files found matching pattern: {pattern}"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('find_dirs '):
+                # Find directories only: find_dirs "*test*"
+                pattern = user_input[10:].strip().strip('"')
+                result = self.pattern_matcher.find_directories(pattern)
+                
+                if result["success"]:
+                    dirs = result["filePaths"]
+                    if dirs:
+                        dir_list = "\n".join(f"• {dir}" for dir in dirs[:10])
+                        if result["truncated"]:
+                            dir_list += f"\n... and {result['totalFiles'] - 10} more directories"
+                        self.ai.speak(f"Found {result['totalFiles']} directories")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"📁 Found {result['totalFiles']} directories:\n{dir_list}"
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"📁 No directories found matching pattern: {pattern}"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('code_init'):
+                # Initialize code intelligence: code_init or code_init --force
+                force = '--force' in user_input
+                
+                result = self.code_intelligence.initialize_workspace(".", force)
+                
+                if result["initialized_servers"]:
+                    server_names = [info["name"] for info in result["initialized_servers"].values()]
+                    self.ai.speak(f"Code intelligence initialized for {len(server_names)} languages")
+                    
+                    response = f"🧠 Code Intelligence Initialized\n"
+                    response += f"📁 Workspace: {Path(result['workspace']).name}\n"
+                    response += f"🔍 Languages: {', '.join(result['detected_languages'])}\n"
+                    response += f"✅ Servers: {', '.join(server_names)}\n"
+                    
+                    if result["unavailable_servers"]:
+                        unavailable = list(result["unavailable_servers"].keys())
+                        response += f"❌ Unavailable: {', '.join(unavailable)}"
+                    
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return response
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return "❌ No language servers could be initialized"
+            
+            elif user_input.startswith('code_status'):
+                # Show code intelligence status
+                if not self.code_intelligence.is_ready():
+                    self.performance_monitor.end_operation(operation_data, success=True)
+                    return "🧠 Code intelligence not initialized. Use 'code_init' to initialize."
+                
+                status = self.code_intelligence.get_status()
+                
+                response = f"🧠 Code Intelligence Status\n"
+                response += f"📁 Workspace: {Path(status['workspace_root']).name}\n"
+                response += f"🔧 Active Servers:\n"
+                
+                for lang, info in status["active_servers"].items():
+                    status_icon = "✅" if info["initialized"] else "🔄"
+                    response += f"  {status_icon} {info['name']} ({lang})\n"
+                
+                self.performance_monitor.end_operation(operation_data, success=True)
+                return response
+            
+            elif user_input.startswith('search_symbols '):
+                # Search for symbols: search_symbols "UserService"
+                symbol_name = user_input[15:].strip().strip('"')
+                
+                result = self.code_intelligence.search_symbols(symbol_name)
+                
+                if result.get("success"):
+                    symbols = result["symbols"]
+                    if symbols:
+                        symbol_list = []
+                        for symbol in symbols[:5]:
+                            file_name = Path(symbol["location"]["file"]).name
+                            symbol_list.append(f"• {symbol['name']} at {file_name}:{symbol['location']['line']}")
+                        
+                        response = f"🔍 Found {len(symbols)} symbols:\n" + "\n".join(symbol_list)
+                        if len(symbols) > 5:
+                            response += f"\n... and {len(symbols) - 5} more"
+                        
+                        self.ai.speak(f"Found {len(symbols)} symbols")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return response
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"🔍 No symbols found for: {symbol_name}"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('goto_definition '):
+                # Go to definition: goto_definition file.py 42 10
+                parts = user_input[16:].strip().split()
+                if len(parts) >= 3:
+                    file_path, line_str, char_str = parts[0], parts[1], parts[2]
+                    try:
+                        line = int(line_str)
+                        character = int(char_str)
+                        
+                        result = self.code_intelligence.goto_definition(file_path, line, character)
+                        
+                        if result.get("success"):
+                            loc = result["location"]
+                            file_name = Path(loc["file"]).name
+                            response = f"📍 Definition: {file_name}:{loc['line']}:{loc['character']}"
+                            
+                            self.ai.speak(f"Found definition in {file_name}")
+                            self.performance_monitor.end_operation(operation_data, success=True)
+                            return response
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ {result['error']}"
+                    except ValueError:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid line or character number"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return "❌ Usage: goto_definition <file> <line> <character>"
+            
+            elif user_input.startswith('find_references '):
+                # Find references: find_references file.py 42 10
+                parts = user_input[16:].strip().split()
+                if len(parts) >= 3:
+                    file_path, line_str, char_str = parts[0], parts[1], parts[2]
+                    try:
+                        line = int(line_str)
+                        character = int(char_str)
+                        
+                        result = self.code_intelligence.find_references(file_path, line, character)
+                        
+                        if result.get("success"):
+                            refs = result["references"]
+                            if refs:
+                                ref_list = []
+                                for ref in refs[:5]:
+                                    file_name = Path(ref["file"]).name
+                                    ref_list.append(f"• {file_name}:{ref['line']}:{ref['character']}")
+                                
+                                response = f"🔗 Found {len(refs)} references:\n" + "\n".join(ref_list)
+                                if len(refs) > 5:
+                                    response += f"\n... and {len(refs) - 5} more"
+                                
+                                self.ai.speak(f"Found {len(refs)} references")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return response
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return "🔗 No references found"
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ {result['error']}"
+                    except ValueError:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid line or character number"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return "❌ Usage: find_references <file> <line> <character>"
+            
+            elif user_input.startswith('document_symbols '):
+                # Get document symbols: document_symbols file.py
+                file_path = user_input[17:].strip()
+                
+                result = self.code_intelligence.get_document_symbols(file_path)
+                
+                if result.get("success"):
+                    symbols = result["symbols"]
+                    if symbols:
+                        symbol_list = []
+                        for symbol in symbols[:10]:
+                            symbol_list.append(f"• {symbol['name']} (line {symbol['line']})")
+                        
+                        response = f"📋 Found {len(symbols)} symbols in {Path(file_path).name}:\n" + "\n".join(symbol_list)
+                        if len(symbols) > 10:
+                            response += f"\n... and {len(symbols) - 10} more"
+                        
+                        self.ai.speak(f"Found {len(symbols)} symbols in file")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return response
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"📋 No symbols found in {Path(file_path).name}"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('get_diagnostics '):
+                # Get diagnostics: get_diagnostics file.py
+                file_path = user_input[16:].strip()
+                
+                result = self.code_intelligence.get_diagnostics(file_path)
+                
+                if result.get("success"):
+                    diagnostics = result["diagnostics"]
+                    if diagnostics:
+                        diag_list = []
+                        for diag in diagnostics[:5]:
+                            severity_map = {1: "Error", 2: "Warning", 3: "Info", 4: "Hint"}
+                            severity = severity_map.get(diag["severity"], "Unknown")
+                            diag_list.append(f"• {severity} line {diag['line']}: {diag['message']}")
+                        
+                        response = f"🔍 Found {len(diagnostics)} diagnostics in {Path(file_path).name}:\n" + "\n".join(diag_list)
+                        if len(diagnostics) > 5:
+                            response += f"\n... and {len(diagnostics) - 5} more"
+                        
+                        self.ai.speak(f"Found {len(diagnostics)} diagnostics")
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return response
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=True)
+                        return f"✅ No diagnostics found in {Path(file_path).name}"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return f"❌ {result['error']}"
+            
+            elif user_input.startswith('rename_symbol '):
+                # Rename symbol: rename_symbol file.py 42 10 newName --dry-run
+                parts = user_input[14:].strip().split()
+                if len(parts) >= 4:
+                    file_path, line_str, char_str, new_name = parts[0], parts[1], parts[2], parts[3]
+                    dry_run = '--dry-run' in user_input
+                    
+                    try:
+                        line = int(line_str)
+                        character = int(char_str)
+                        
+                        result = self.code_intelligence.rename_symbol(file_path, line, character, new_name, dry_run)
+                        
+                        if result.get("success"):
+                            if dry_run:
+                                response = f"🔄 Dry run: {result['message']}"
+                            else:
+                                response = f"✏️ Renamed symbol in {result['changes']} locations"
+                                if result.get("files_modified"):
+                                    file_names = [Path(f).name for f in result["files_modified"][:3]]
+                                    response += f"\nFiles: {', '.join(file_names)}"
+                                    if len(result["files_modified"]) > 3:
+                                        response += f" and {len(result['files_modified']) - 3} more"
+                            
+                            self.ai.speak("Symbol rename completed" if not dry_run else "Dry run completed")
+                            self.performance_monitor.end_operation(operation_data, success=True)
+                            return response
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ {result['error']}"
+                    except ValueError:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid line or character number"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return "❌ Usage: rename_symbol <file> <line> <character> <new_name> [--dry-run]"
+            
+            elif user_input.startswith('grep '):
+                # Parse grep command: grep "pattern" or grep "pattern" --include="*.py"
+                parts = user_input[5:].strip()
+                
+                # Extract pattern (first quoted string)
+                if parts.startswith('"'):
+                    end_quote = parts.find('"', 1)
+                    if end_quote != -1:
+                        pattern = parts[1:end_quote]
+                        remaining = parts[end_quote+1:].strip()
+                        
+                        # Parse additional options
+                        kwargs = {}
+                        if '--include=' in remaining:
+                            include_start = remaining.find('--include=') + 10
+                            if remaining[include_start] == '"':
+                                include_end = remaining.find('"', include_start + 1)
+                                if include_end != -1:
+                                    kwargs['include'] = remaining[include_start+1:include_end]
+                        
+                        if '--case-sensitive' in remaining:
+                            kwargs['case_sensitive'] = True
+                        
+                        # Perform search
+                        result = self.search_system.grep(pattern, **kwargs)
+                        
+                        if result["success"]:
+                            if result["numMatches"] > 0:
+                                matches_text = f"Found {result['numMatches']} matches in {result['numFiles']} files"
+                                if result["truncated"]:
+                                    matches_text += " (truncated)"
+                                
+                                # Show first few matches
+                                match_details = []
+                                for match in result["results"][:5]:
+                                    if "file" in match and "line" in match:
+                                        file_name = Path(match["file"]).name
+                                        match_details.append(f"• {file_name}:{match['line']} - {match['content'][:60]}...")
+                                
+                                response = f"🔍 {matches_text}\n" + "\n".join(match_details)
+                                if len(result["results"]) > 5:
+                                    response += f"\n... and {len(result['results']) - 5} more matches"
+                                
+                                self.ai.speak(f"Found {result['numMatches']} matches")
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return response
+                            else:
+                                self.performance_monitor.end_operation(operation_data, success=True)
+                                return f"🔍 No matches found for pattern: {pattern}"
+                        else:
+                            self.performance_monitor.end_operation(operation_data, success=False)
+                            return f"❌ Search failed"
+                    else:
+                        self.performance_monitor.end_operation(operation_data, success=False)
+                        return "❌ Invalid grep command: missing closing quote"
+                else:
+                    self.performance_monitor.end_operation(operation_data, success=False)
+                    return "❌ Invalid grep command: pattern must be quoted"
             
             # TIER 0: Classify user intent
             intent = self.intent_classifier.classify_intent(user_input)
