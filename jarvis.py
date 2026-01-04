@@ -96,6 +96,8 @@ class JARVIS:
         self.conversation_ai.feature_discovery = self.feature_discovery
         self.conversation_ai.memory_system = self.memory
         
+        # Mode management
+        self.voice_mode = False  # Default: text chat mode
         self.wake_word_mode = False
         self.vision_active = False
         
@@ -744,7 +746,92 @@ Voice Commands Examples:
         else:
             return f"❌ No {workflow_type} workflow steps could be identified from the task."
     
+    def _handle_mode_commands(self, user_input):
+        """Handle voice/text mode switching commands"""
+        user_lower = user_input.lower().strip()
+        
+        # Voice mode activation
+        if any(phrase in user_lower for phrase in [
+            'start voice mode', 'enable voice', 'switch to voice', 'voice mode on',
+            'activate voice', 'turn on voice', 'voice chat'
+        ]):
+            self.voice_mode = True
+            self.ai.speak("Voice mode activated. I'm now listening and speaking.")
+            return "🎤 Voice mode activated - JARVIS will now listen and speak"
+        
+        # Voice mode deactivation  
+        elif any(phrase in user_lower for phrase in [
+            'stop voice mode', 'disable voice', 'switch to text', 'voice mode off',
+            'deactivate voice', 'turn off voice', 'text chat', 'text mode'
+        ]):
+            self.voice_mode = False
+            return "💬 Text chat mode activated - Type your messages"
+        
+        # Wake word mode (within voice mode)
+        elif user_lower in ['wake', 'wake word', 'wake mode']:
+            if self.voice_mode:
+                self.wake_word_mode = True
+                self.ai.speak("Wake word mode enabled. Say 'Hey JARVIS' to activate.")
+                return "👂 Wake word mode enabled - Say 'Hey JARVIS'"
+            else:
+                return "❌ Wake word mode only available in voice mode"
+        
+        return None
+    
+    def _get_user_input(self):
+        """Get user input based on current mode"""
+        if self.voice_mode:
+            if self.wake_word_mode:
+                # Wait for wake word
+                print("👂 Listening for 'Hey JARVIS'...")
+                wake_detected = self.voice.wait_for_wake_word()
+                if wake_detected:
+                    self.ai.speak("Yes, I'm listening")
+                    print("🎤 JARVIS activated - Listening...")
+                    return self.voice.listen()
+                return None
+            else:
+                # Direct voice input
+                print("🎤 Voice mode - Speak your command...")
+                return self.voice.listen()
+        else:
+            # Text chat mode
+            return input("💬 JARVIS> ").strip()
+    
+    def _display_mode_status(self):
+        """Display current mode status"""
+        if self.voice_mode:
+            mode_icon = "🎤"
+            mode_text = "Voice Mode"
+            if self.wake_word_mode:
+                mode_text += " (Wake Word)"
+        else:
+            mode_icon = "💬"
+            mode_text = "Text Chat Mode"
+        
+        print(f"\n{mode_icon} Current Mode: {mode_text}")
+        return mode_text
+
     def _determine_action_type(self, user_input):
+        """Determine the type of action from user input"""
+        user_lower = user_input.lower()
+        
+        if any(word in user_lower for word in ['research', 'analyze', 'study']):
+            return "research"
+        elif any(word in user_lower for word in ['security', 'vulnerability', 'compliance']):
+            return "security"
+        elif any(word in user_lower for word in ['workflow', 'automate', 'agent']):
+            return "workflow"
+        elif any(word in user_lower for word in ['task', 'todo', 'schedule']):
+            return "task_management"
+        elif any(word in user_lower for word in ['knowledge', 'store', 'remember']):
+            return "knowledge"
+        elif any(word in user_input for word in ['mv', 'cp', 'rm', 'mkdir', 'ls', 'cd']):
+            return "file_system"
+        elif user_input.startswith('/') or user_input.startswith('./'):
+            return "command"
+        else:
+            return "general"
         """Determine the type of action from user input"""
         user_lower = user_input.lower()
         
@@ -2065,104 +2152,142 @@ Voice Commands Examples:
         print("🤖 JARVIS v1.0 - Advanced AI Assistant")
         print("="*60)
         print(f"📁 Current directory: {self.current_dir}")
-        print("\nModes:")
-        print("1. Press ENTER for voice input")
-        print("2. Type 'wake' for wake word mode")
-        print("3. Type command directly")
-        print("4. Type 'exit' to quit\n")
+        
+        # Display initial mode
+        self._display_mode_status()
+        
+        print("\n💡 Mode Commands:")
+        print("• 'start voice mode' - Switch to voice interaction")
+        print("• 'text mode' - Switch to text chat")
+        print("• 'wake' - Enable wake word (voice mode only)")
+        print("• 'exit' - Quit JARVIS\n")
         
         self.ai.speak("JARVIS online and ready to assist you!")
-    
-        while True:
-            if self.wake_word_mode:
-                print("🔊 Wake word mode active - say 'Hey JARVIS' then your command")
-                user_input = self.voice.listen(wake_word_mode=True)
-            else:
-                mode = input("JARVIS> ").strip()
-                
-                if mode.lower() == 'exit':
-                    self.ai.speak("Goodbye! JARVIS signing off.")
-                    print("👋 JARVIS offline")
+        
+        try:
+            while True:
+                try:
+                    # Get input based on current mode
+                    user_input = self._get_user_input()
                     
-                    # End session and cleanup
-                    session_summary = self.memory.end_session()
-                    self.task_scheduler.stop_scheduler()
-                    
-                    if session_summary:
-                        print(f"📊 Session Summary: {session_summary['total_interactions']} interactions, {session_summary['success_rate']:.1f}% success rate")
-                    
-                    break
-                
-                if mode.lower() == 'wake':
-                    self.wake_word_mode = True
-                    continue
-                
-                # Get input
-                if mode == "":
-                    user_input = self.voice.listen() 
                     if not user_input:
                         continue
-                else:
-                    user_input = mode
-        
-            if not user_input:
-                continue
+                    
+                    # Handle exit command
+                    if user_input.lower() == 'exit':
+                        if self.voice_mode:
+                            self.ai.speak("Goodbye! JARVIS signing off.")
+                        print("👋 JARVIS offline")
+                        
+                        # End session and cleanup
+                        session_summary = self.memory.end_session()
+                        self.task_scheduler.stop_scheduler()
+                        
+                        if session_summary:
+                            print(f"📊 Session Summary: {session_summary['total_interactions']} interactions, {session_summary['success_rate']:.1f}% success rate")
+                        break
+                    
+                    # Check for mode switching commands first
+                    mode_result = self._handle_mode_commands(user_input)
+                    if mode_result:
+                        print(mode_result)
+                        continue
+                    
+                    # Process the input
+                    result = self.process_input(user_input)
+                    
+                    if result:
+                        # Determine if the operation was successful
+                        success = not (result.startswith('❌') or 'Error:' in result or 'failed' in result.lower() or result.startswith('⚠️'))
+                        action_type = self._determine_action_type(user_input)
+                        
+                        # Record interaction in memory system
+                        self.memory.remember_interaction(user_input, result, action_type, success)
+                        self.learning_system.learn_from_interaction(user_input, result, action_type, success)
+                        
+                        # Output result based on mode
+                        if self.voice_mode and success:
+                            # Speak successful results in voice mode
+                            self.ai.speak("Task completed successfully")
+                        
+                        print(result)
+                        continue
+                    
+                    # Fallback to treating as direct command
+                    command = user_input
+                    
+                    if not command:
+                        # Still learn from non-command interactions
+                        self.memory.remember_interaction(user_input, "Handled by specialized system", "system", True)
+                        self.learning_system.learn_from_interaction(user_input, "System handled", "system", True)
+                        continue
+                    
+                    # Safety check
+                    if self.is_dangerous_command(command):
+                        warning_msg = f"⚠️  DANGEROUS: {command}"
+                        print(warning_msg)
+                        
+                        if self.voice_mode:
+                            self.ai.speak("This command could be dangerous. Please confirm.")
+                            # In voice mode, get voice confirmation
+                            print("🎤 Say 'yes' to confirm or anything else to cancel...")
+                            confirm = self.voice.listen()
+                        else:
+                            confirm = input("Continue? (yes): ")
+                        
+                        if not confirm or confirm.lower() != 'yes':
+                            cancel_msg = "❌ Cancelled for safety"
+                            if self.voice_mode:
+                                self.ai.speak("Command cancelled for safety.")
+                            print(cancel_msg)
+                            self.memory.remember_interaction(user_input, "Command cancelled for safety", "safety", False)
+                            continue
+                    
+                    # Execute
+                    print(f"⚙️  Executing: {command}")
+                    result = self.system.execute_command(command)
+                    
+                    # Remember the interaction
+                    response = "Command executed successfully" if result['success'] else f"Command failed: {result.get('error', 'Unknown error')}"
+                    self.memory.remember_interaction(user_input, response, "command", result['success'])
+                    self.learning_system.learn_from_interaction(user_input, response, "command", result['success'])
+                    
+                    # Voice feedback for command execution
+                    if self.voice_mode:
+                        if result['success']:
+                            self.ai.speak("Command executed successfully")
+                        else:
+                            self.ai.speak("Command failed")
                 
-            # Process
-            # Process input and learn from interaction
-            result = self.process_input(user_input)
-            
-            if result:
-                # Determine if the operation was successful
-                success = not (result.startswith('❌') or 'Error:' in result or 'failed' in result.lower() or result.startswith('⚠️'))
-                action_type = self._determine_action_type(user_input)
-                
-                # Record interaction in memory system
-                self.memory.remember_interaction(user_input, result, action_type, success)
-                self.learning_system.learn_from_interaction(user_input, result, action_type, success)
-                
-                print(result)
-                continue
-            
-            # Fallback to treating as direct command
-            command = user_input
-            
-            if not command:
-                # Still learn from non-command interactions
-                self.memory.remember_interaction(user_input, "Handled by specialized system", "system", True)
-                self.learning_system.learn_from_interaction(user_input, "System handled", "system", True)
-                continue
-            
-            # Safety check
-            if self.is_dangerous_command(command):
-                print(f"⚠️  DANGEROUS: {command}")
-                self.ai.speak("This command could be dangerous. Please confirm.")
-                confirm = input("Continue? (yes): ")
-                if confirm.lower() != 'yes':
-                    self.ai.speak("Command cancelled for safety.")
-                    print("❌ Cancelled")
-                    self.memory.remember_interaction(user_input, "Command cancelled for safety", "safety", False)
+                    print("\n" + "-"*60)
+                    
+                    if result['success']:
+                        if result['output']:
+                            print(result['output'])
+                    else:
+                        print(f"❌ Error: {result['error']}")
+                        if self.voice_mode:
+                            self.ai.speak(f"I encountered an error while executing that command.")
+                        print(f"\n🤖 JARVIS: I encountered an error while executing that command.")
+                        
+                except KeyboardInterrupt:
+                    if self.voice_mode:
+                        self.ai.speak("Interrupted. Switching to text mode.")
+                    print("\n⚠️ Interrupted - Switching to text mode")
+                    self.voice_mode = False
+                    self.wake_word_mode = False
                     continue
+                    
+        except Exception as e:
+            error_msg = f"❌ Critical error: {str(e)}"
+            print(error_msg)
+            if self.voice_mode:
+                self.ai.speak("Critical error occurred. Shutting down.")
             
-            # Execute
-            print(f"⚙️  Executing: {command}")
-            result = self.system.execute_command(command)
-            
-            # Remember the interaction
-            response = "Command executed successfully" if result['success'] else f"Command failed: {result.get('error', 'Unknown error')}"
-            self.memory.remember_interaction(user_input, response, "command", result['success'])
-            self.learning_system.learn_from_interaction(user_input, response, "command", result['success'])
-        
-            print("\n" + "-"*60)
-            if result['success']:
-                if result['output']:
-                    print(result['output'])
-                self.ai.speak("Task completed successfully!")
-                print("✅ Done")
-            else:
-                print(f"❌ Error: {result['error']}")
-                self.ai.speak("I encountered an error while executing that command.")
-            print("-"*60 + "\n")
+        finally:
+            # Cleanup
+            if hasattr(self, 'task_scheduler'):
+                self.task_scheduler.stop_scheduler()
 
 if __name__ == "__main__":
     jarvis = JARVIS()
