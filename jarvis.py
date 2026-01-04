@@ -554,28 +554,40 @@ Voice Commands Examples:
         return any(indicator in user_lower for indicator in workflow_indicators)
     
     def _process_workflow_task(self, user_input):
-        """Process complex workflow task using JARVIS tools"""
-        print("🔄 JARVIS planning workflow...")
+        """Process complex workflow task using JARVIS tools with REAL INTELLIGENCE"""
+        print("🔄 JARVIS planning intelligent execution...")
         
-        # Execute workflow step by step with intelligent chaining
+        # CRITICAL FIX: Actually execute tasks instead of just creating workflows
         workflow_context = {}
         
         try:
-            # Security workflow detection
-            if any(word in user_input.lower() for word in ['security', 'vulnerability', 'compliance', 'scan']):
-                return self._execute_security_workflow(user_input, workflow_context)
+            # CODE ANALYSIS INTELLIGENCE
+            if any(word in user_input.lower() for word in ['analyze', 'codebase', 'code', 'functions', 'refactor', 'documentation']):
+                return self._execute_code_analysis_task(user_input, workflow_context)
             
-            # Research workflow detection
-            elif 'research' in user_input.lower():
-                return self._execute_research_workflow(user_input, workflow_context)
+            # RESEARCH INTELLIGENCE  
+            elif any(word in user_input.lower() for word in ['research', 'analyze', 'trends', 'developments', 'study', 'investigate']):
+                return self._execute_research_task(user_input, workflow_context)
             
-            # General workflow
+            # SECURITY INTELLIGENCE
+            elif any(word in user_input.lower() for word in ['security', 'vulnerability', 'compliance', 'scan', 'audit']):
+                return self._execute_security_task(user_input, workflow_context)
+            
+            # WEB DEVELOPMENT INTELLIGENCE
+            elif any(word in user_input.lower() for word in ['create', 'build', 'develop', 'website', 'app', 'application']):
+                return self._execute_development_task(user_input, workflow_context)
+            
+            # SYSTEM INTELLIGENCE
+            elif any(word in user_input.lower() for word in ['system', 'process', 'monitor', 'optimize', 'performance']):
+                return self._execute_system_task(user_input, workflow_context)
+            
+            # GENERAL INTELLIGENCE - Use AI reasoning for complex tasks
             else:
-                return self._execute_general_workflow(user_input, workflow_context)
+                return self._execute_intelligent_reasoning_task(user_input, workflow_context)
                 
         except Exception as e:
-            print(f"❌ Error in workflow processing: {str(e)}")
-            return f"❌ Error processing workflow: {str(e)}"
+            print(f"❌ Error in intelligent processing: {str(e)}")
+            return f"❌ Error processing task: {str(e)}"
     
     def _execute_security_workflow(self, user_input, workflow_context):
         """Execute security-focused workflow"""
