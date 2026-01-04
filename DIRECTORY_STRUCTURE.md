@@ -1,28 +1,32 @@
-# 🤖 JARVIS Project Directory Structure
+# 🤖 JARVIS Project Directory Structure (Clean)
 
-## 📁 Clean Directory Organization
+## 📁 Simplified Directory Organization
 
 ```
 voice_shell_mini/
+├── 🚀 Quick Start
+│   ├── start.sh                    # 🎯 MAIN LAUNCHER (use this!)
+│   └── setup.sh                    # Initial setup script
+│
 ├── 🤖 Core JARVIS Files
-│   ├── jarvis.py                    # Main JARVIS application
+│   ├── jarvis_unified_cli.py       # 🌟 Unified Terminal (Warp-style)
 │   ├── jarvis_cli.py               # Terminal CLI interface
+│   ├── jarvis.py                   # Main JARVIS application
 │   └── voiceshell.py               # Legacy voice shell (backup)
 │
 ├── 📚 Documentation
 │   ├── README.md                   # Project documentation
 │   ├── roadmap.txt                 # Development roadmap
 │   ├── working_rules.md            # Development process guide
-│   ├── working_rules.json          # Process rules (JSON format)
+│   ├── UNIFIED_TERMINAL_ROADMAP.md # Unified terminal implementation
+│   ├── DIRECTORY_STRUCTURE.md      # This file
 │   ├── JARVIS_ADVANCED_ROADMAP.md  # Advanced roadmap
 │   └── PROJECT_ANALYSIS_REPORT.md  # Project analysis
 │
 ├── 🔧 Development Tools
 │   ├── jarvis_implementation_tracker.py    # Tool implementation tracker
 │   ├── JARVIS_IMPLEMENTATION_TRACKER.json  # Progress tracking data
-│   ├── setup.sh                           # Installation script
-│   ├── launch_tui.sh                      # CLI launcher
-│   └── tui_options.sh                     # Interface options
+│   └── working_rules.json                  # Process rules (JSON)
 │
 ├── ⚙️ Configuration
 │   ├── .env                        # API keys and config
@@ -31,33 +35,15 @@ voice_shell_mini/
 │   ├── requirements.txt           # Python dependencies
 │   └── command_patterns.json      # Fast command patterns
 │
-├── 🧠 JARVIS Modules
+├── 🧠 JARVIS Modules (20+ modules)
 │   └── modules/
+│       ├── unified_terminal.py    # 🌟 Unified terminal logic
 │       ├── ai_handler.py          # Minimax M2.1 integration
 │       ├── voice_input.py         # Speech recognition
 │       ├── system_controller.py   # System operations
-│       ├── file_system_manager.py # File operations (Tool 1)
-│       ├── search_system.py       # Advanced search (Tool 2)
-│       ├── pattern_matcher.py     # Pattern matching (Tool 3)
-│       ├── lsp_manager.py         # LSP integration (Tool 4)
-│       ├── web_search.py          # Web search (Tool 7)
-│       ├── research_system.py     # Research & analysis (Tool 9)
-│       ├── knowledge_base.py      # Knowledge management (Tool 10)
-│       ├── subagent_system.py     # Subagent system (Tool 13)
-│       ├── task_management.py     # Task management (Tool 14)
-│       ├── workflow_engine.py     # Workflow automation (Tool 15)
-│       ├── aws_integration.py     # AWS CLI integration (Tool 16)
-│       ├── infrastructure_management.py # Infrastructure (Tool 17)
-│       ├── security_compliance.py # Security & compliance (Tool 18)
-│       ├── window_manager.py      # Window management (Phase 2)
-│       ├── process_manager.py     # Process management (Phase 2)
-│       ├── memory_system.py       # Long-term memory
-│       ├── context_manager.py     # Context switching
-│       ├── learning_system.py     # Learning from interactions
-│       ├── task_scheduler.py      # Task scheduling
-│       ├── feature_discovery.py   # Self-awareness
-│       ├── intent_classifier.py   # Intent classification
-│       └── performance_monitor.py # Performance tracking
+│       ├── window_manager.py      # Window management
+│       ├── process_manager.py     # Process management
+│       └── ... (15+ more modules)
 │
 ├── 💾 Data Storage
 │   ├── jarvis_knowledge.db        # Knowledge database
@@ -70,38 +56,34 @@ voice_shell_mini/
     └── venv/                     # Virtual environment
 ```
 
-## 🗑️ Cleaned Up (Removed)
+## 🚀 How to Use
 
-### Test Files & Directories
-- ❌ `test_security.py` - Security test file
-- ❌ `test_file.txt` - Simple test file
-- ❌ `jarvis_renamed_folder/` - Empty test directory
-- ❌ `created_by_jarvis/` - Empty test directory
-- ❌ `test/` - Empty test directory
-- ❌ `__pycache__/` - Python cache
+### Simple Start (Recommended)
+```bash
+./start.sh
+```
 
-### Temporary Files
-- ❌ `knowledge_export_all_*.json` - Export files
-- ❌ `knowledge_backup_*.json` - Backup files
-- ❌ `playground/` - Development playground
+### What You Get
+- **Unified Terminal**: AI chat + native shell in one prompt
+- **Smart Detection**: Automatically routes AI vs shell commands
+- **Full JARVIS**: All 18 tools and capabilities available
+- **Clean Interface**: Beautiful terminal UI with help system
 
-## 📊 Directory Statistics
+## 📊 Clean Directory Stats
 
-- **Total Files**: 26 (down from 35)
-- **Core JARVIS Files**: 3
-- **Documentation**: 6
-- **Development Tools**: 5
-- **Configuration**: 5
-- **JARVIS Modules**: 20+ modules
-- **Data Storage**: 4 databases/files
-- **Python Environment**: 1 venv
+- **Total Files**: 28 (streamlined and organized)
+- **Launcher Scripts**: 1 (simplified from 4)
+- **Core Interfaces**: 3 (unified, CLI, classic)
+- **Documentation**: 7 files
+- **JARVIS Modules**: 20+ specialized modules
+- **No Clutter**: All test files and outdated scripts removed
 
-## 🎯 Organization Benefits
+## 🎯 Key Improvements
 
-✅ **Clean Structure** - No test files or temporary clutter
-✅ **Logical Grouping** - Files organized by purpose
-✅ **Easy Navigation** - Clear directory hierarchy
-✅ **Maintainable** - Well-documented and structured
+✅ **Single Start Script** - No confusion, just run `./start.sh`
+✅ **Clean Structure** - Removed 3 outdated launcher scripts
+✅ **Unified Terminal** - Warp Terminal-inspired interface
+✅ **Well Organized** - Logical file grouping and naming
 ✅ **Production Ready** - Only essential files remain
 
-The directory is now clean, organized, and ready for production use or further development!
+The directory is now clean, simple, and ready for immediate use!

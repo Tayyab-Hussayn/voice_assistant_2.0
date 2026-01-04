@@ -39,30 +39,20 @@ MINIMAX_API_KEY=your_minimax_api_key_here
 
 ### 3. Run JARVIS
 
-#### Option A: Unified Terminal (Recommended) 🆕
 ```bash
-# Launch Warp Terminal-inspired unified interface
-./launch_unified.sh
-
-# Or directly
-python jarvis_unified_cli.py
+# Simple one-command startup
+./start.sh
 ```
 
-#### Option B: Terminal CLI
+**Alternative Options:**
 ```bash
-# Launch elegant terminal interface (Gemini CLI style)
+# Direct unified terminal
+python jarvis_unified_cli.py
+
+# Classic CLI interface  
 python jarvis_cli.py
 
-# Or use the launcher script
-./launch_tui.sh
-```
-
-#### Option C: Classic Terminal Mode
-```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Launch classic JARVIS
+# Original JARVIS
 python jarvis.py
 ```
 
