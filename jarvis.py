@@ -27,7 +27,10 @@ from modules.task_scheduler import TaskScheduler
 from modules.feature_discovery import FeatureDiscovery
 from modules.intent_classifier import IntentClassifier
 from modules.workflow_engine import WorkflowEngine
+from modules.window_manager import WindowManager
+from modules.process_manager import ProcessManager
 from modules.performance_monitor import PerformanceMonitor
+from modules.process_manager import ProcessManager
 from modules.error_handler import ErrorHandler
 from modules.intelligent_workflow_engine import IntelligentWorkflowEngine
 import os
@@ -70,6 +73,10 @@ class JARVIS:
         self.aws = AWSIntegration()  # AWS CLI integration (Tool 16)
         self.infra = InfrastructureIntegration(self.aws.aws_manager)  # Infrastructure management (Tool 17)
         self.security = SecurityCompliance(self.aws.aws_manager)  # Security & compliance (Tool 18)
+        
+        # Phase 2: System Control & Automation (Complete)
+        self.window_manager = WindowManager()  # Window management
+        self.process_manager = ProcessManager()  # Process management
         
         # Phase 4: Intelligence & Memory System
         self.memory = MemorySystem()  # Long-term memory
@@ -940,6 +947,65 @@ Voice Commands Examples:
         operation_data = self.performance_monitor.start_operation("process_input")
         
         try:
+            # Phase 2: System Control & Automation Commands (High Priority)
+            if (user_input.startswith('list windows') or user_input.startswith('show windows') or
+                user_input.startswith('list processes') or user_input.startswith('show processes') or
+                user_input.startswith('system stats') or user_input.startswith('system status') or
+                user_input.startswith('close window ') or user_input.startswith('focus window ') or
+                user_input.startswith('kill process ') or user_input.startswith('launch ') or 
+                user_input.startswith('start ')):
+                
+                if user_input.startswith('list windows') or user_input.startswith('show windows'):
+                    result = self.window_manager.list_windows()
+                    if result['success']:
+                        windows = result['windows']
+                        if windows:
+                            response = f"🪟 Found {len(windows)} open windows:\n"
+                            for w in windows[:10]:  # Show first 10
+                                response += f"• {w.get('title', 'Untitled')} ({w.get('class', 'Unknown')})\n"
+                        else:
+                            response = "🪟 No windows found"
+                    else:
+                        response = f"❌ Window listing failed: {result['error']}"
+                    
+                    self.performance_monitor.end_operation(operation_data, success=result['success'])
+                    return response
+                
+                elif user_input.startswith('list processes') or user_input.startswith('show processes'):
+                    filter_name = None
+                    if ' ' in user_input and len(user_input.split()) > 2:
+                        filter_name = user_input.split(None, 2)[2]
+                    
+                    result = self.process_manager.list_processes(filter_name)
+                    if result['success']:
+                        processes = result['processes'][:10]  # Show top 10
+                        response = f"🔄 Top {len(processes)} processes"
+                        if filter_name:
+                            response += f" matching '{filter_name}'"
+                        response += ":\n"
+                        for p in processes:
+                            response += f"• {p['name']} (PID: {p['pid']}) - CPU: {p['cpu_percent']:.1f}%\n"
+                    else:
+                        response = f"❌ Process listing failed: {result['error']}"
+                    
+                    self.performance_monitor.end_operation(operation_data, success=result['success'])
+                    return response
+                
+                elif user_input.startswith('system stats') or user_input.startswith('system status'):
+                    result = self.process_manager.get_system_stats()
+                    if result['success']:
+                        stats = result['stats']
+                        response = f"📊 System Statistics:\n"
+                        response += f"• CPU: {stats['cpu_percent']:.1f}%\n"
+                        response += f"• Memory: {stats['memory']['percent']:.1f}% ({stats['memory']['used']//1024//1024//1024}GB used)\n"
+                        response += f"• Disk: {stats['disk']['percent']:.1f}% ({stats['disk']['used']//1024//1024//1024}GB used)\n"
+                        response += f"• Processes: {stats['process_count']}"
+                    else:
+                        response = f"❌ System stats failed: {result['error']}"
+                    
+                    self.performance_monitor.end_operation(operation_data, success=result['success'])
+                    return response
+            
             # Handle special commands first
             if user_input.startswith('/'):
                 result = self.handle_special_commands(user_input)
@@ -991,6 +1057,95 @@ Voice Commands Examples:
                 
                 self.performance_monitor.end_operation(operation_data, success=False)
                 return "❌ Invalid fs_write command format"
+            
+            # Phase 2: System Control & Automation Commands
+            elif user_input.startswith('list windows') or user_input.startswith('show windows'):
+                result = self.window_manager.list_windows()
+                if result['success']:
+                    windows = result['windows']
+                    if windows:
+                        response = f"🪟 Found {len(windows)} open windows:\n"
+                        for w in windows[:10]:  # Show first 10
+                            response += f"• {w.get('title', 'Untitled')} ({w.get('class', 'Unknown')})\n"
+                    else:
+                        response = "🪟 No windows found"
+                else:
+                    response = f"❌ Window listing failed: {result['error']}"
+                
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('close window '):
+                window_id = user_input[13:].strip()
+                result = self.window_manager.close_window(window_id)
+                response = f"✅ Window closed" if result['success'] else f"❌ {result['error']}"
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('focus window '):
+                window_id = user_input[13:].strip()
+                result = self.window_manager.focus_window(window_id)
+                response = f"✅ Window focused" if result['success'] else f"❌ {result['error']}"
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('list processes') or user_input.startswith('show processes'):
+                filter_name = None
+                if ' ' in user_input and len(user_input.split()) > 2:
+                    filter_name = user_input.split(None, 2)[2]
+                
+                result = self.process_manager.list_processes(filter_name)
+                if result['success']:
+                    processes = result['processes'][:10]  # Show top 10
+                    response = f"🔄 Top {len(processes)} processes:\n"
+                    for p in processes:
+                        response += f"• {p['name']} (PID: {p['pid']}) - CPU: {p['cpu_percent']:.1f}%\n"
+                else:
+                    response = f"❌ Process listing failed: {result['error']}"
+                
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('kill process '):
+                target = user_input[13:].strip()
+                force = 'force' in user_input.lower()
+                
+                try:
+                    pid = int(target)
+                    result = self.process_manager.kill_process(pid, force)
+                except ValueError:
+                    result = self.process_manager.kill_process_by_name(target, force)
+                
+                response = f"✅ {result.get('message', 'Process killed')}" if result['success'] else f"❌ {result['error']}"
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('launch ') or user_input.startswith('start '):
+                app_name = user_input.split(None, 1)[1] if len(user_input.split()) > 1 else ""
+                if app_name:
+                    result = self.process_manager.launch_application(app_name)
+                    response = f"✅ {result.get('message', 'Application launched')}" if result['success'] else f"❌ {result['error']}"
+                else:
+                    response = "❌ Please specify an application name"
+                    result = {'success': False}
+                
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
+            
+            elif user_input.startswith('system stats') or user_input.startswith('system status'):
+                result = self.process_manager.get_system_stats()
+                if result['success']:
+                    stats = result['stats']
+                    response = f"📊 System Statistics:\n"
+                    response += f"• CPU: {stats['cpu_percent']:.1f}%\n"
+                    response += f"• Memory: {stats['memory']['percent']:.1f}% ({stats['memory']['used']//1024//1024//1024}GB used)\n"
+                    response += f"• Disk: {stats['disk']['percent']:.1f}% ({stats['disk']['used']//1024//1024//1024}GB used)\n"
+                    response += f"• Processes: {stats['process_count']}"
+                else:
+                    response = f"❌ System stats failed: {result['error']}"
+                
+                self.performance_monitor.end_operation(operation_data, success=result['success'])
+                return response
             
             elif user_input.startswith('glob '):
                 # Parse glob command: glob "*.py" or glob "**/*.js" --limit=50
