@@ -1,26 +1,6 @@
 {
   "history": [
     {
-      "timestamp": "2026-01-03T13:06:55.926987",
-      "user": "hi jarvis",
-      "jarvis": "Greetings! All systems are online and ready for your commands."
-    },
-    {
-      "timestamp": "2026-01-03T13:10:59.769572",
-      "user": "what do you know about me",
-      "jarvis": "Here's what I know about you: custom: I work at TechCorp, name: john"
-    },
-    {
-      "timestamp": "2026-01-03T13:11:26.610313",
-      "user": "my name is Alice",
-      "jarvis": "Yes, I remember your name is john."
-    },
-    {
-      "timestamp": "2026-01-03T13:11:26.847366",
-      "user": "do you remember my name",
-      "jarvis": "Yes, I remember your name is john."
-    },
-    {
       "timestamp": "2026-01-03T13:11:42.180754",
       "user": "my name is Bob",
       "jarvis": "Yes, I remember your name is john."
@@ -249,8 +229,28 @@
       "timestamp": "2026-01-04T10:21:57.886473",
       "user": "llm ko",
       "jarvis": "Ah, I believe you're referring to me! As an Large Language Model, I'm at your service, Tayyab.\n\nWhat would you like to know about LLMs, or how may I assist you today? \n\nWhether"
+    },
+    {
+      "timestamp": "2026-01-04T18:57:04.071361",
+      "user": "enable voice mode",
+      "jarvis": "*Sir, I must be transparent with you.*\n\nWhile I'd love to narrate our conversation with the smooth charm of"
+    },
+    {
+      "timestamp": "2026-01-04T18:57:54.665770",
+      "user": "hey jarvis",
+      "jarvis": "Good to see you! I'm ready to help with whatever you need."
+    },
+    {
+      "timestamp": "2026-01-04T19:00:04.137639",
+      "user": "what's update",
+      "jarvis": "Good afternoon, Tayyab! \n\nI don't have any specific updates to report since our last exchange. However, I remain at your full disposal.\n\nCould you clarify what you'd like an update on?\n\n- **Your current project at Google?** \n- **A task or file you're working on?**\n- **General tech/news updates?**\n\nJust let me know, and I'll have the information ready for you."
+    },
+    {
+      "timestamp": "2026-01-04T21:17:14.566023",
+      "user": "what is machine learning?",
+      "jarvis": "Hello! JARVIS at your service. How may I assist you today?"
     }
   ],
   "context": {},
-  "last_updated": "2026-01-04T10:21:57.886749"
+  "last_updated": "2026-01-04T21:17:14.566205"
 }

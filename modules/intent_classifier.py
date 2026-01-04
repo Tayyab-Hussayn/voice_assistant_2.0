@@ -62,22 +62,43 @@ class IntentClassifier:
         ]
     
     def classify_intent(self, user_input):
-        """Classify user input as 'command', 'question', or 'conversation'"""
+        """Enhanced classify user input as 'command', 'question', or 'conversation' with terminal awareness"""
         user_input_lower = user_input.lower().strip()
         
-        # Check for workflow-specific commands first
+        # Terminal-specific patterns (highest priority)
+        terminal_patterns = [
+            r'^(ls|cd|pwd|mkdir|rm|cp|mv|grep|find|cat|echo|chmod|chown|touch|head|tail|sort|uniq|wc)\s',
+            r'^\w+\s+(-\w+|--\w+)',  # Commands with flags
+            r'^\w+.*\|\s*\w+',       # Commands with pipes
+            r'^git\s+\w+',           # Git commands
+            r'^(npm|pip|apt|yum|brew)\s+\w+',  # Package managers
+            r'^(ps|top|htop|df|du|free|uname|whoami|which|whereis)\s*',  # System commands
+            r'^\./\w+',              # Execute local scripts
+            r'^/\w+',                # Absolute paths
+        ]
+        
+        # Check for explicit terminal commands first
+        for pattern in terminal_patterns:
+            if re.match(pattern, user_input_lower):
+                return 'command'
+        
+        # Check for workflow-specific commands
         if ("deep research" in user_input_lower or 
             "comprehensive research" in user_input_lower or
             "research workflow" in user_input_lower):
             return 'command'
             
-        # Check for conversational input first
+        # Check for conversational input
         if any(indicator in user_input_lower for indicator in self.conversational_indicators):
             return 'conversation'
         
-        # Check for explicit question patterns
+        # Enhanced scoring with terminal context
         question_score = self._calculate_question_score(user_input_lower)
         command_score = self._calculate_command_score(user_input_lower)
+        
+        # Terminal context bias (if available)
+        if hasattr(self, 'terminal_context') and getattr(self, 'terminal_context', False):
+            command_score += 1  # Slight bias toward commands in terminal mode
         
         # If it's clearly a question
         if question_score > command_score and question_score > 2:
@@ -100,6 +121,10 @@ class IntentClassifier:
             return 'command'
         else:
             return 'conversation'
+    
+    def set_terminal_context(self, in_terminal_mode: bool):
+        """Set terminal context for better intent classification"""
+        self.terminal_context = in_terminal_mode
     
     def _calculate_question_score(self, user_input):
         """Calculate how likely the input is a question"""

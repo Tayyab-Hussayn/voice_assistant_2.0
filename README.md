@@ -39,7 +39,16 @@ MINIMAX_API_KEY=your_minimax_api_key_here
 
 ### 3. Run JARVIS
 
-#### Option A: Terminal CLI (Recommended)
+#### Option A: Unified Terminal (Recommended) 🆕
+```bash
+# Launch Warp Terminal-inspired unified interface
+./launch_unified.sh
+
+# Or directly
+python jarvis_unified_cli.py
+```
+
+#### Option B: Terminal CLI
 ```bash
 # Launch elegant terminal interface (Gemini CLI style)
 python jarvis_cli.py
@@ -48,7 +57,7 @@ python jarvis_cli.py
 ./launch_tui.sh
 ```
 
-#### Option B: Classic Terminal Mode
+#### Option C: Classic Terminal Mode
 ```bash
 # Activate virtual environment
 source venv/bin/activate
@@ -58,6 +67,13 @@ python jarvis.py
 ```
 
 ## 🎯 Usage Examples
+
+### Unified Terminal (Warp-style) 🆕
+- **Mixed Usage**: `ls -la` → `ai: explain this directory` → `$ cd modules` → `jarvis: analyze this code`
+- **Shell Commands**: `git status`, `npm install`, `python script.py`
+- **AI Chat**: `ai: how do I deploy to AWS?`, `ai: create a React component`
+- **JARVIS Tasks**: `jarvis: research machine learning`, `jarvis: create a web project`
+- **Mode Switching**: `$ command` (force shell), `ai: message` (force AI), `jarvis: task` (force JARVIS)
 
 ### Voice Commands
 - **"Hey JARVIS, create a web project called portfolio"**
