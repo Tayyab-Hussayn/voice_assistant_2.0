@@ -3332,3 +3332,48 @@ JARVIS has analyzed the development requirements and provided a comprehensive so
 
 # Replace the development method
 JARVIS._execute_development_task = _execute_enhanced_development_task
+
+def _is_task_request(self, user_input):
+    """Enhanced detection of task requests that need intelligent processing"""
+    task_indicators = [
+        # Development tasks
+        'create', 'build', 'develop', 'implement', 'design', 'generate',
+        'microservices', 'e-commerce', 'platform', 'application', 'website',
+        'service', 'api', 'database', 'authentication', 'payment',
+        
+        # Architecture tasks
+        'architecture', 'infrastructure', 'deployment', 'ci/cd', 'pipeline',
+        'high availability', 'auto-scaling', 'monitoring', 'security',
+        
+        # Research tasks
+        'research', 'analyze', 'study', 'investigate', 'trends', 'compare',
+        'frameworks', 'latest developments',
+        
+        # Complex requests
+        'comprehensive', 'complete', 'enterprise-level', 'production',
+        'scalability', 'maintainability', 'best practices'
+    ]
+    
+    user_lower = user_input.lower()
+    
+    # Check for task indicators
+    if any(indicator in user_lower for indicator in task_indicators):
+        return True
+    
+    # Check for complex sentence structure (likely a task)
+    if len(user_input.split()) > 10:  # Long requests are usually tasks
+        return True
+    
+    # Check for requirement-style language
+    requirement_patterns = [
+        'i need you to', 'i want you to', 'please', 'requirements',
+        'with the following', 'ensure', 'consider', 'implement proper'
+    ]
+    
+    if any(pattern in user_lower for pattern in requirement_patterns):
+        return True
+    
+    return False
+
+# Add method to JARVIS class
+JARVIS._is_task_request = _is_task_request

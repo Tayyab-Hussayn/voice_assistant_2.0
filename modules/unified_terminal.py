@@ -271,23 +271,47 @@ class UnifiedTerminal:
     
     def handle_intelligent_mode(self, user_input: str) -> Dict[str, Any]:
         """
-        Handle intelligent mode using JARVIS's full processing pipeline
+        Handle intelligent mode using JARVIS's full processing pipeline - NO FAKE RESPONSES!
         """
         try:
-            # Let JARVIS handle with its full intelligence
+            # CRITICAL FIX: Actually call JARVIS processing instead of fake completion
+            print("🧠 JARVIS processing complex task...")
+            
+            # Use JARVIS's real intelligent processing
             response = self.jarvis.process_input(user_input)
             
-            return {
-                "success": True,
-                "output": response if response else "✅ JARVIS completed the task",
-                "mode": "intelligent",
-                "input": user_input
-            }
+            # Validate that we got a real response, not just the input echoed back
+            if response and response != user_input and len(response) > 50:
+                return {
+                    "success": True,
+                    "output": response,
+                    "mode": "intelligent",
+                    "input": user_input
+                }
+            else:
+                # If JARVIS didn't provide a real response, force AI reasoning
+                print("🤖 Forcing AI reasoning for complex task...")
+                ai_response = self.jarvis.ai.get_response(f"Provide a comprehensive solution for: {user_input}")
+                
+                if ai_response and len(ai_response) > 100:
+                    return {
+                        "success": True,
+                        "output": f"🧠 JARVIS AI Analysis:\n{ai_response}",
+                        "mode": "intelligent",
+                        "input": user_input
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "output": "❌ JARVIS could not process this complex task",
+                        "mode": "intelligent",
+                        "input": user_input
+                    }
             
         except Exception as e:
             return {
                 "success": False,
-                "output": f"❌ Processing error: {str(e)}",
+                "output": f"❌ Intelligent processing error: {str(e)}",
                 "mode": "intelligent",
                 "input": user_input
             }
